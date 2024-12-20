@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 1200px;
+            margin: 20px 0;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Platform Dashboard</h1>
+    <div class="container">
+        
+        
+        <h2>Merchants Revenue</h2>
+        <table>
+            <tr>
+                <th>Restaurant Name</th>
+                <th>Total Revenue</th>
+            </tr>
+            {% for merchant in merchants_revenue %}
+            <tr>
+                <td>{{ merchant.restaurant_name }}</td>
+                <td>{{ merchant.total_revenue }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    
+    <div class="container">
+        <h2>Delivery Person Orders</h2>
+        <table>
+            <tr>
+                <th>Delivery Person Name</th>
+                <th>Total Orders</th>
+            </tr>
+            {% for delivery_person in delivery_person_orders %}
+            <tr>
+                <td>{{ delivery_person.full_name }}</td>
+                <td>{{ delivery_person.total_orders }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    
+    <div class="container">
+        <h2>Customers Due Amount</h2>
+        <table>
+            <tr>
+                <th>Customer Name</th>
+                <th>Due Amount</th>
+            </tr>
+            {% for customer in customers_due_amount %}
+            <tr>
+                <td>{{ customer.full_name }}</td>
+                <td>{{ customer.due_amount }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+</html>

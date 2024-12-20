@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通知取餐</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px 0;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .nav-button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .nav-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>通知取餐</h1>
+        <div id="pickup-list">
+            <!-- 範例取餐通知 -->
+            <div class="order-item">
+                <span>訂單 #1: 已準備好</span>
+                <button class="button" onclick="notifyPickup(1)">通知取餐</button>
+            </div>
+        </div>
+        <div>
+            <a href="rindex.html" class="nav-button">返回主頁</a>
+        </div>
+    </div>
+
+    <script>
+        function notifyPickup(orderId) {
+            alert(`訂單 #${orderId} 已通知取餐`);
+            // 在這裡可以添加更多邏輯來處理通知取餐
+        }
+    </script>
+</body>
+</html>

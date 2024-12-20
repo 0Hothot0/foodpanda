@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主機： localhost:8889
--- 產生時間： 2024 年 12 月 13 日 03:02
+-- 產生時間： 2024 年 12 月 20 日 07:24
 -- 伺服器版本： 8.0.35
 -- PHP 版本： 8.2.20
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- 資料庫： `	foodpangolin`
+-- 資料庫： `foodpangolin`
 --
 
 -- --------------------------------------------------------
@@ -29,10 +29,10 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `customer_details` (
   `customer_id` int NOT NULL,
-  `password` varchar(100) NOT NULL,
-  `full_name` varchar(100) NOT NULL,
-  `address` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `password` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `full_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `address` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `customer_details`
@@ -51,10 +51,10 @@ INSERT INTO `customer_details` (`customer_id`, `password`, `full_name`, `address
 
 CREATE TABLE `delivery_person_details` (
   `delivery_id` int NOT NULL,
-  `password` varchar(100) NOT NULL,
-  `full_name` varchar(100) NOT NULL,
-  `vehicle_info` varchar(100) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `password` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `full_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `vehicle_info` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `delivery_person_details`
@@ -74,10 +74,10 @@ INSERT INTO `delivery_person_details` (`delivery_id`, `password`, `full_name`, `
 CREATE TABLE `menu` (
   `menu_id` int NOT NULL,
   `restaurant_id` int DEFAULT NULL,
-  `item_name` varchar(100) NOT NULL,
+  `item_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
   `price` decimal(10,2) NOT NULL,
   `availability` tinyint(1) DEFAULT '1'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `menu`
@@ -102,10 +102,10 @@ CREATE TABLE `orders` (
   `customer_id` int DEFAULT NULL,
   `restaurant_id` int DEFAULT NULL,
   `delivery_person_id` int DEFAULT NULL,
-  `order_status` enum('pending','confirmed','delivering','completed') DEFAULT 'pending',
+  `order_status` enum('pending','confirmed','delivering','completed') COLLATE utf8mb4_general_ci DEFAULT 'pending',
   `total_amount` decimal(10,2) NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `orders`
@@ -127,7 +127,7 @@ CREATE TABLE `order_details` (
   `order_id` int DEFAULT NULL,
   `menu_id` int DEFAULT NULL,
   `quantity` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `order_details`
@@ -149,16 +149,17 @@ INSERT INTO `order_details` (`detail_id`, `order_id`, `menu_id`, `quantity`) VAL
 
 CREATE TABLE `platform_details` (
   `platform_id` int NOT NULL,
-  `password` varchar(100) NOT NULL,
-  `platform_name` varchar(100) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `password` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `platform_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `platform_details`
 --
 
 INSERT INTO `platform_details` (`platform_id`, `password`, `platform_name`) VALUES
-(1, 'platformPass', '平台系統');
+(1, 'platformPass', '平台系統'),
+(12, '111', '燙');
 
 -- --------------------------------------------------------
 
@@ -168,11 +169,11 @@ INSERT INTO `platform_details` (`platform_id`, `password`, `platform_name`) VALU
 
 CREATE TABLE `restaurant_details` (
   `restaurant_id` int NOT NULL,
-  `password` varchar(100) NOT NULL,
-  `restaurant_name` varchar(100) NOT NULL,
-  `address` varchar(255) DEFAULT NULL,
-  `contact_number` varchar(15) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `password` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `restaurant_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `address` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `contact_number` varchar(15) COLLATE utf8mb4_general_ci DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `restaurant_details`
@@ -194,7 +195,7 @@ CREATE TABLE `reviews` (
   `order_id` int DEFAULT NULL,
   `customer_id` int DEFAULT NULL,
   `rating` int DEFAULT NULL,
-  `comments` text,
+  `comments` text COLLATE utf8mb4_general_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ;
 
@@ -219,7 +220,7 @@ CREATE TABLE `settlements` (
   `amount` decimal(10,2) NOT NULL,
   `user_id` int DEFAULT NULL,
   `settled_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `settlements`
@@ -244,27 +245,27 @@ INSERT INTO `settlements` (`settlement_id`, `order_id`, `amount`, `user_id`, `se
 
 CREATE TABLE `users` (
   `user_id` int NOT NULL,
-  `username` varchar(50) NOT NULL,
+  `username` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
   `role` int NOT NULL,
-  `role_id` int DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `password` varchar(100) COLLATE utf8mb4_general_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `users`
 --
 
-INSERT INTO `users` (`user_id`, `username`, `role`, `role_id`, `created_at`) VALUES
-(1, '炸雞餐廳', 1, 1, '2024-12-11 14:11:14'),
-(2, '披薩商家', 1, 2, '2024-12-11 14:11:14'),
-(3, '壽司店', 1, 3, '2024-12-11 14:11:14'),
-(4, '送貨員A', 2, 1, '2024-12-11 14:11:14'),
-(5, '送貨員B', 2, 2, '2024-12-11 14:11:14'),
-(6, '送貨員C', 2, 3, '2024-12-11 14:11:14'),
-(7, '客戶A', 3, 1, '2024-12-11 14:11:14'),
-(8, '客戶B', 3, 2, '2024-12-11 14:11:14'),
-(9, '客戶C', 3, 3, '2024-12-11 14:11:14'),
-(10, '平台系統', 4, 1, '2024-12-11 14:11:14');
+INSERT INTO `users` (`user_id`, `username`, `role`, `password`) VALUES
+(1, '炸雞餐廳', 1, 'pass123'),
+(2, '披薩商家', 1, 'pass456'),
+(3, '壽司店', 1, 'pass789'),
+(4, '送貨員A', 2, 'pass987'),
+(5, '送貨員B', 2, 'pass654'),
+(6, '送貨員C', 2, 'pass321'),
+(7, '客戶A', 3, 'pass1234'),
+(8, '客戶B', 3, 'pass5678'),
+(9, '客戶C', 3, 'pass9101'),
+(10, '平台系統', 4, 'platformPass'),
+(12, '燙', 4, '111');
 
 --
 -- 已傾印資料表的索引
@@ -378,7 +379,7 @@ ALTER TABLE `order_details`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `platform_details`
 --
 ALTER TABLE `platform_details`
-  MODIFY `platform_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `platform_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- 使用資料表自動遞增(AUTO_INCREMENT) `restaurant_details`
@@ -402,7 +403,7 @@ ALTER TABLE `settlements`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `user_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- 已傾印資料表的限制式
