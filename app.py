@@ -10,9 +10,9 @@ app.secret_key = os.urandom(24)
 # 設置數據庫配置
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'root'
+app.config['MYSQL_PASSWORD'] = '' #原本為root 但我的DB沒有密碼
 app.config['MYSQL_DB'] = 'foodpangolin'
-app.config['MYSQL_PORT'] = 8889
+app.config['MYSQL_PORT'] = 3306    #原本為8889 windows環境port為3306
 
 # 設置日誌
 logging.basicConfig(level=logging.DEBUG)
@@ -54,7 +54,7 @@ def register():
     return render_template('register.html', errors=errors)
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])     #將此處直接定義為根路由
 def login():
     app.logger.debug('Login route called')
     errors = []
@@ -67,7 +67,17 @@ def login():
             session['user_id'] = user['user_id']
             session['role'] = user['role']
             flash('Login successful!', 'success')
-            return render_template('platform.html')
+            if session['role'] == 1:
+                print(f"目前role={session['role']} 商家")
+                return render_template('restaurant/rindex.html')
+            elif session['role'] == 2:
+                print(f"目前role={session['role']} 小哥")
+                return render_template('delivery/delivery_index.html')
+            elif session['role'] == 3:
+                print(f"目前role={session['role']} 客戶")
+                return render_template('customer/index.html')
+            else:
+                return render_template('platform.html') 
         else:
             errors.append('Invalid username or password')
             flash('Invalid username or password', 'danger')
@@ -92,6 +102,7 @@ def platform_dashboard():
             merchants_revenue=merchants_revenue, 
             delivery_person_orders=delivery_person_orders, 
             customers_due_amount=customers_due_amount)
+
     
     
     
