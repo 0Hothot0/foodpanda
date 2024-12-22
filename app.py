@@ -103,7 +103,22 @@ def platform_dashboard():
             delivery_person_orders=delivery_person_orders, 
             customers_due_amount=customers_due_amount)
 
-    
+#小哥
+@app.route('/delivery_index')
+def delivery_index():
+    return render_template('delivery/delivery_index.html')
+
+@app.route('/view_orders')
+def view_order():
+    return render_template('delivery/view_orders.html')
+
+@app.route('/accepted_orders')
+def accepted_order():
+    return render_template('delivery/accepted.html')
+
+@app.route('/completed_orders')
+def completed_orders():
+    return render_template('delivery/completed_orders.html')
     
     
 if __name__ == '__main__':

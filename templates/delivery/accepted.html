@@ -26,7 +26,7 @@
             justify-content: space-between;
             margin-bottom: 10px;
         }
-        .button {
+        button {
             display: inline-block;
             padding: 10px 20px;
             margin: 5px 0;
@@ -35,7 +35,7 @@
             border: none;
             cursor: pointer;
         }
-        .button:hover {
+        button:hover {
             background-color: #0056b3;
         }
         .nav-button {
@@ -60,12 +60,12 @@
             <!-- 範例訂單 -->
             <div class="order-item">
                 <span>訂單 #1: 炒飯 - $50</span>
-                <button class="button" onclick="pickupOrder(1)">取貨</button>
-                <button class="button" onclick="completeOrder(1)">送達簽收</button>
+                <button class="pickup"  onclick="pickupOrder(1)">取貨</button>
+                <button  onclick="completeOrder(1)">送達簽收</button>
             </div>
         </div>
         <div>
-            <a href="delivery_index.html" class="nav-button">返回主頁</a>
+            <a href="{{ url_for('delivery_index') }}" class="nav-button">返回主頁</a>
         </div>
     </div>
 
@@ -73,11 +73,15 @@
         function pickupOrder(orderId) {
             alert(`訂單 #${orderId} 已取貨`);
             // 在這裡可以添加更多邏輯來處理取貨
+            const pickup = document.querySelector('.pickup')
+            pickup.style.display = 'none'
+
         }
 
         function completeOrder(orderId) {
             alert(`訂單 #${orderId} 已送達簽收`);
             // 在這裡可以添加更多邏輯來處理送達簽收
+            window.location.href = "{{ url_for('completed_orders') }}";
         }
     </script>
 </body>

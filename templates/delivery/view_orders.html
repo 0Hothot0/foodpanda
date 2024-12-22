@@ -64,7 +64,7 @@
             </div>
         </div>
         <div>
-            <a href="delivery_index.html" class="nav-button">返回主頁</a>
+            <a href="{{ url_for('delivery_index') }}" class="nav-button">返回主頁</a>
         </div>
     </div>
 
@@ -72,6 +72,7 @@
         function acceptOrder(orderId) {
             alert(`訂單 #${orderId} 已接單`);
             // 在這裡可以添加更多邏輯來處理接單
+            window.location.href = "{{ url_for('accepted_order') }}";
         }
     </script>
 </body>
