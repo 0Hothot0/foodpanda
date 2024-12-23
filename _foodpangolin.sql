@@ -32,7 +32,7 @@ CREATE TABLE `customer_details` (
   `password` varchar(100) NOT NULL,
   `full_name` varchar(100) NOT NULL,
   `address` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `customer_details`
@@ -54,7 +54,7 @@ CREATE TABLE `delivery_person_details` (
   `password` varchar(100) NOT NULL,
   `full_name` varchar(100) NOT NULL,
   `vehicle_info` varchar(100) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `delivery_person_details`
@@ -77,7 +77,7 @@ CREATE TABLE `menu` (
   `item_name` varchar(100) NOT NULL,
   `price` decimal(10,2) NOT NULL,
   `availability` tinyint(1) DEFAULT '1'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `menu`
@@ -105,7 +105,7 @@ CREATE TABLE `orders` (
   `order_status` enum('pending','confirmed','delivering','completed') DEFAULT 'pending',
   `total_amount` decimal(10,2) NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `orders`
@@ -127,7 +127,7 @@ CREATE TABLE `order_details` (
   `order_id` int DEFAULT NULL,
   `menu_id` int DEFAULT NULL,
   `quantity` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `order_details`
@@ -151,7 +151,7 @@ CREATE TABLE `platform_details` (
   `platform_id` int NOT NULL,
   `password` varchar(100) NOT NULL,
   `platform_name` varchar(100) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `platform_details`
@@ -172,7 +172,7 @@ CREATE TABLE `restaurant_details` (
   `restaurant_name` varchar(100) NOT NULL,
   `address` varchar(255) DEFAULT NULL,
   `contact_number` varchar(15) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `restaurant_details`
@@ -219,7 +219,7 @@ CREATE TABLE `settlements` (
   `amount` decimal(10,2) NOT NULL,
   `user_id` int DEFAULT NULL,
   `settled_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `settlements`
@@ -248,7 +248,7 @@ CREATE TABLE `users` (
   `role` int NOT NULL,
   `role_id` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `users`
