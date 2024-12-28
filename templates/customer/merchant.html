@@ -22,6 +22,8 @@
             text-align: center;
         }
         .merchant-item {
+            display: flex;
+            justify-content: space-between;
             margin-bottom: 10px;
         }
         .button {
@@ -43,13 +45,14 @@
     <div class="container">
         <h1>商家列表</h1>
         <div id="merchant-list">
-            <!-- 範例商家 -->
+            {% for merchant in merchants %}
             <div class="merchant-item">
-                <span>商家 #1: 美味餐廳</span>
-                <a href="menu_c.html" class="button">查看菜單</a>
-                <a href="index.html" class="button">返回主畫面</a>
+                <span>商家 #{{ merchant.restaurant_id }}: {{ merchant.restaurant_name }}</span>
+                <a href="/menu/{{ merchant.restaurant_id }}" class="button">查看菜單</a>
             </div>
+            {% endfor %}
         </div>
+        <a href="/customer_index" class="button">返回主畫面</a>
     </div>
 </body>
 </html>

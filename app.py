@@ -5,6 +5,7 @@ import os
 from dbUtils import get_db, close_db, validate_login, get_user, register_user,get_completed_order
 from dbUtils import get_merchants_revenue, get_delivery_person_orders, get_customers_due_amount
 from dbUtils import add_menu_item, get_menu_item, get_pending_order, get_order_detail, get_accepted_order
+from dbUtils import get_menu, get_all_restaurants, get_order_details
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -178,6 +179,64 @@ def add_menu_item_route():
     except Exception as e:
         return jsonify({'error': '菜品上架失敗'}), 500
 
+#客戶
+@app.route('/customer_index')
+def customer_index():
+    return render_template('customer/index.html')
+
+@app.route('/merchant.html', methods=['GET'])
+@login_required  # 確保只有已登入的客戶才能訪問
+def merchants():
+    """
+    顯示所有商家的列表頁面
+    """
+    try:
+        # 調用DB函數獲取所有商家
+        merchants = get_all_restaurants()
+        # 渲染商家列表模板，將商家資料傳遞到前端
+        return render_template('customer/merchant.html', merchants=merchants)
+    except Exception as e:
+        app.logger.error(f"Error rendering merchants page: {e}")
+        # 如果出現錯誤，回傳空的商家列表頁面
+        return render_template('customer/merchant.html', merchants=[])
+
+
+@app.route('/menu/<int:restaurant_id>', methods=['GET'])
+@login_required
+def menu_c(restaurant_id):
+    """
+    顯示指定餐廳的菜單頁面
+    """
+    try:
+        # 調用資料庫函數，獲取指定餐廳的菜單資料
+        menu_items = get_menu(restaurant_id)
+        # 渲染菜單模板，將菜單資料傳遞到前端
+        return render_template('customer/menu_c.html', menu_items=menu_items, restaurant_id=restaurant_id)
+    except Exception as e:
+        app.logger.error(f"Error rendering menu for restaurant_id {restaurant_id}: {e}")
+        # 如果出現錯誤，返回空的菜單頁面
+        return render_template('customer/menu_c.html', menu_items=[], restaurant_id=restaurant_id)
+
+@app.route('/order_status.html', methods=['GET'])
+@login_required
+def order_status():
+    """
+    顯示客戶的訂單狀態頁面
+    """
+    try:
+        # 從 session 中獲取客戶 ID
+        customer_id = session.get('user_id')
+        if not customer_id:
+            return redirect(url_for('login'))
+
+        # 獲取該客戶的所有訂單
+        orders = get_order_details(customer_id)
+
+        # 傳遞訂單資料到前端模板
+        return render_template('order_status.html', orders=orders)
+    except Exception as e:
+        app.logger.error(f"Error fetching order status: {e}")
+        return render_template('order_status.html', orders=[])
 
     
 if __name__ == '__main__':

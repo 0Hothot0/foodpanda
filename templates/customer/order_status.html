@@ -78,53 +78,26 @@
     <div class="container">
         <h1>查看訂單狀態</h1>
         <div id="order-status-list">
-            <!-- 範例訂單狀態 -->
+            {% for order in orders %}
             <div class="order-item">
                 <div class="order-details">
-                    <span>訂單 #1: 炒飯 - $50 - 狀態: 運送中</span>
-                    <button class="button" onclick="confirmReceipt(1)">收貨</button>
+                    <span>訂單 #{{ order.order_id }}: {{ order.item_name }} - ${{ order.item_total }} - 狀態: {{ order.order_status }}</span>
+                    <button class="button" >收貨</button>
                 </div>
                 <div class="rating">
-                    <label for="rating-1">評分:</label>
-                    <input type="number" id="rating-1" min="1" max="5">
-                    <label for="comment-1">評論:</label>
-                    <textarea id="comment-1"></textarea>
-                    <button class="button" onclick="submitRating(1)">提交評分</button>
+                    <label for="rating-{{ order.order_id }}">評分:</label>
+                    <input type="number" id="rating-{{ order.order_id }}" min="1" max="5">
+                    <label for="comment-{{ order.order_id }}">評論:</label>
+                    <textarea id="comment-{{ order.order_id }}"></textarea>
+                    <button class="button" >提交評分</button>
                 </div>
             </div>
-            <div class="order-item">
-                <div class="order-details">
-                    <span>訂單 #2: 牛肉麵 - $80 - 狀態: 未接單</span>
-                    <button class="button" onclick="confirmReceipt(2)">收貨</button>
-                </div>
-                <div class="rating">
-                    <label for="rating-2">評分:</label>
-                    <input type="number" id="rating-2" min="1" max="5">
-                    <label for="comment-2">評論:</label>
-                    <textarea id="comment-2"></textarea>
-                    <button class="button" onclick="submitRating(2)">提交評分</button>
-                </div>
-            </div>
-            <!-- 可以添加更多訂單 -->
+            {% endfor %}
         </div>
         <div>
-            <a href="menu_c.html" class="nav-button">返回菜單</a>
-            <a href="index.html" class="nav-button">返回主畫面</a>
+            <a href="/menu_c" class="nav-button">返回菜單</a>
+            <a href="/customer_index" class="nav-button">返回主畫面</a>
         </div>
-    </div>
-
-    <script>
-        function confirmReceipt(orderId) {
-            alert(`訂單 #${orderId} 已收貨`);
-            // 在這裡可以添加更多邏輯來處理收貨
-        }
-
-        function submitRating(orderId) {
-            const rating = document.getElementById(`rating-${orderId}`).value;
-            const comment = document.getElementById(`comment-${orderId}`).value;
-            alert(`訂單 #${orderId} 評分: ${rating}, 評論: ${comment}`);
-            // 在這裡可以添加更多邏輯來處理評分和評論
-        }
-    </script>
+    </div>    
 </body>
 </html>

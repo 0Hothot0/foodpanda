@@ -57,22 +57,22 @@
     <div class="container">
         <h1>菜單</h1>
         <div id="menu-list">
-            <!-- 範例菜單項目 -->
+            {% for item in menu_items %}
             <div class="menu-item">
-                <span>炒飯 - $50</span>
-                <button class="button" onclick="orderItem('炒飯', 50)">下單</button>
+                <span>{{ item.item_name }} - ${{ item.price }}</span>
+                <button class="button" onclick="orderItem('{{ item.item_name }}')">下單</button>
             </div>
+            {% endfor %}
         </div>
         <div>
-            <a href="merchant.html" class="nav-button">返回商家列表</a>
-            <a href="index.html" class="nav-button">返回主畫面</a>
+            <a href="/merchant.html" class="nav-button">返回商家列表</a>
+            <a href="/customer_index" class="nav-button">返回主畫面</a>
         </div>
     </div>
 
     <script>
         function orderItem(itemName, itemPrice) {
-            alert(`已下單: ${itemName} - $${itemPrice}`);
-            // 在這裡可以添加更多邏輯來處理下單
+            alert(`已下單: ${itemName} `);
         }
     </script>
 </body>

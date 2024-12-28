@@ -168,3 +168,84 @@ def get_order_detail(order_id):
         # 取得查詢結果
         order = cursor.fetchone()
         return order
+
+#客戶
+def get_all_restaurants():
+    """
+    從資料庫獲取所有餐廳的資訊
+    """
+    db, cursor = get_db()
+    try:
+        cursor.execute("SELECT * FROM restaurant_details")
+        return cursor.fetchall()  # 返回所有商家資料
+    except Exception as e:
+        current_app.logger.error(f"Error fetching all restaurants: {e}")
+        raise e
+
+
+def get_menu(restaurant_id):
+    """
+    根據餐廳 ID 獲取菜單
+    """
+    db, cursor = get_db()
+    try:
+        cursor.execute("SELECT * FROM menu WHERE restaurant_id = %s", (restaurant_id,))
+        return cursor.fetchall()  # 返回該餐廳的所有菜單項目
+    except Exception as e:
+        current_app.logger.error(f"Error fetching menu: {e}")
+        raise e
+
+
+	
+def get_order_details(order_id):
+    db, cursor = get_db()
+    cursor.execute("""
+        SELECT 
+            o.order_id, 
+            o.customer_id, 
+            o.restaurant_id, 
+            o.total_amount, 
+            o.order_status, 
+            d.menu_id, 
+            m.item_name, 
+            d.quantity, 
+            m.price, 
+            (d.quantity * m.price) AS item_total
+        FROM orders o
+        JOIN order_details d ON o.order_id = d.order_id
+        JOIN menu m ON d.menu_id = m.menu_id
+        WHERE o.order_id = %s
+    """, (order_id,))
+    return cursor.fetchall()
+
+
+def get_order_status(order_id):
+    db, cursor = get_db()
+    cursor.execute("SELECT order_status FROM orders WHERE order_id = %s", (order_id,))
+    return cursor.fetchone()
+
+	
+def update_order_status(order_id, status):
+    db, cursor = get_db()
+    cursor.execute("UPDATE orders SET status = %s WHERE order_id = %s", (status, order_id))
+    db.commit()
+
+
+def submit_review(order_id, customer_id, menu_id, rating, comments):
+    db, cursor = get_db()
+    cursor.execute("""
+        INSERT INTO reviews (order_id, customer_id, menu_id, rating, comments)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (order_id, customer_id, menu_id, rating, comments))
+    db.commit()
+
+	
+def get_reviews(menu_id):
+    db, cursor = get_db()
+    cursor.execute("""
+        SELECT r.review_id, r.rating, r.comments, r.created_at, m.item_name
+        FROM reviews r
+        JOIN menu m ON r.menu_id = m.menu_id
+        WHERE r.menu_id = %s
+    """, (menu_id,))
+    return cursor.fetchall()
