@@ -29,7 +29,7 @@
         .menu-item input {
             margin-left: 10px;
         }
-        .button {
+        button {
             display: inline-block;
             padding: 10px 20px;
             margin: 5px 0;
@@ -38,7 +38,7 @@
             border: none;
             cursor: pointer;
         }
-        .button:hover {
+        button:hover {
             background-color: #0056b3;
         }
         .nav-button {
@@ -54,11 +54,25 @@
         .nav-button:hover {
             background-color: #0056b3;
         }
+
+        .manage{
+            background-color: rgba(64, 121, 6, 0.731);
+
+        }
+        .delete{
+            background-color: red;
+        }
+
+        li{
+            align-items: center;
+            display: flex;
+            gap:20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>菜單上架</h1>
+        <h1>菜單管理</h1>
         <div class="menu-item">
             <label for="menu-item-name">菜品名稱:</label>
             <input type="text" id="menu-item-name" placeholder="輸入菜品名稱">
@@ -68,6 +82,15 @@
             <input type="text" id="menu-item-price" placeholder="輸入價格">
         </div>
         <button class="button" onclick="addMenuItem()">上架菜品</button>
+        <div class="list">
+            <h2>已上架商品</h2>
+            <ul id="menu-list">
+                <!-- 使用後端傳遞的數據生成列表 -->
+                {% for item in menu_items %}
+                    <li>{{ item.item_name }} ${{ item.price }} <button class="manage">編輯</button><button class="delete">刪除</button></li>
+                {% endfor %}
+            </ul>
+        </div>
         <div id="menu-list"></div>
         <div>
             <a href="{{ url_for('restaurant_index') }}" class="nav-button">返回主頁</a>
@@ -75,22 +98,54 @@
     </div>
 
     <script>
-        function addMenuItem() {
+        async function addMenuItem() {
             const name = document.getElementById('menu-item-name').value;
             const price = document.getElementById('menu-item-price').value;
-            if (name && price) {
-                const menuList = document.getElementById('menu-list');
-                const newItem = document.createElement('div');
-                newItem.className = 'menu-item';
-                newItem.innerHTML = `<span>${name} - $${price}</span>`;
-                menuList.appendChild(newItem);
-                // 清空輸入框
-                document.getElementById('menu-item-name').value = '';
-                document.getElementById('menu-item-price').value = '';
-            } else {
+            if (!name || !price) {
                 alert('請輸入完整的菜品名稱和價格');
+                return;
+            }
+    
+            try {
+                // 發送 POST 請求到後端 API
+                const response = await fetch('/add_menu_item', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        item_name: name,
+                        price: parseFloat(price),
+                    }),
+                });
+    
+                const result = await response.json();
+    
+                if (response.ok && result.success) {
+                    // 如果請求成功，更新菜單列表
+                    const menuList = document.getElementById('menu-list');
+                    const newItem = document.createElement('div');
+                    newItem.className = 'menu-item';
+                    newItem.innerHTML = `<span>${name} - $${price}</span>`;
+                    menuList.appendChild(newItem);
+    
+                    // 清空輸入框
+                    document.getElementById('menu-item-name').value = '';
+                    document.getElementById('menu-item-price').value = '';
+    
+                    alert('菜品已成功上架');
+                } else {
+                    // 如果後端返回錯誤，顯示錯誤訊息
+                    alert(result.error || '菜品上架失敗');
+                }
+            } catch (error) {
+                // 處理任何請求錯誤
+                console.error('Error:', error);
+                alert('菜品上架時發生錯誤');
             }
         }
     </script>
+    
+    
 </body>
 </html>

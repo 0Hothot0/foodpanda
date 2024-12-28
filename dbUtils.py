@@ -99,3 +99,34 @@ def get_customers_due_amount():
     """)
     result = cursor.fetchall()
     return result
+#餐廳
+def add_menu_item(restaurant_id, item_name, price):
+    """
+    新增菜品到資料庫
+    :param restaurant_id: 餐廳ID
+    :param item_name: 菜品名稱
+    :param price: 菜品價格
+    :return: 插入成功回傳 True，失敗拋出異常
+    """
+    try:
+        db, cursor = get_db()
+        cursor.execute(
+            "INSERT INTO menu (restaurant_id, item_name, price, availability) VALUES (%s, %s, %s, 1)",
+            (restaurant_id, item_name, price)
+        )
+        db.commit()
+        return True
+    except Exception as e:
+        current_app.logger.error(f"Error adding menu item: {e}")
+        db.rollback()
+        raise e
+
+def get_menu_item(restaurant_id):
+    try:
+        db, cursor = get_db()
+        cursor.execute("SELECT item_name, price FROM menu WHERE restaurant_id = %s",(restaurant_id,))
+        menu_items = cursor.fetchall()
+        return menu_items
+    except Exception as e:
+        current_app.logger.error(f"Error fetching menu items: {e}")
+        return []

@@ -1,8 +1,10 @@
 import logging
-from flask import Flask, render_template, redirect, url_for, request, session, flash
+from flask import Flask, render_template, redirect, url_for, request, session, flash, jsonify
 from functools import wraps
 import os
-from dbUtils import get_db, close_db, validate_login, get_user, register_user, get_merchants_revenue, get_delivery_person_orders, get_customers_due_amount
+from dbUtils import get_db, close_db, validate_login, get_user, register_user
+from dbUtils import get_merchants_revenue, get_delivery_person_orders, get_customers_due_amount
+from dbUtils import add_menu_item, get_menu_item
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -66,6 +68,7 @@ def login():
         if user:
             session['user_id'] = user['user_id']
             session['role'] = user['role']
+            print("sessionid:",session['user_id'])
             flash('Login successful!', 'success')
             if session['role'] == 1:
                 print(f"目前role={session['role']} 商家")
@@ -82,6 +85,8 @@ def login():
             errors.append('Invalid username or password')
             flash('Invalid username or password', 'danger')
     return render_template('login.html', errors=errors)
+
+
 
 @app.route('/logout')
 def logout():
@@ -127,13 +132,42 @@ def restaurant_index():
 
 @app.route('/menu')
 def menu():
-    return render_template('restaurant/menu.html')
+    try:
+        restaurant_id = session.get('user_id') 
+        print(f"從 session 中獲取的 restaurant_id: {restaurant_id}")
+        menu_items = get_menu_item(restaurant_id)
+        return render_template('restaurant/menu.html', menu_items=menu_items)
+    except Exception as e:
+        app.logger.error(f"Error rendering menu page: {e}")
+        return render_template('restaurant/menu.html', menu_items=[])
+
 @app.route('/orders')
 def restaurant_orders():
     return render_template('restaurant/orders.html')
+
 @app.route('/pickup')
 def restaurant_pickup():
     return render_template('restaurant/pickup.html')
+
+@app.route('/add_menu_item', methods=['POST'])
+def add_menu_item_route():
+    try:
+        # 接收前端傳來的數據
+        data = request.get_json()
+        item_name = data.get('item_name')
+        price = data.get('price')
+        restaurant_id = 1  # 假設 restaurant_id 為 1，可以根據登入用戶設定動態值
+
+        if not item_name or not price:
+            return jsonify({'error': '缺少菜品名稱或價格'}), 400
+
+        # 調用 dbUtils 函數插入數據
+        add_menu_item(restaurant_id, item_name, price)
+
+        return jsonify({'success': True, 'message': '菜品已成功上架'})
+    except Exception as e:
+        return jsonify({'error': '菜品上架失敗'}), 500
+
 
     
 if __name__ == '__main__':
