@@ -119,7 +119,22 @@ def accepted_order():
 @app.route('/completed_orders')
 def completed_orders():
     return render_template('delivery/completed_orders.html')
-    
+
+#餐廳
+@app.route('/restaurant_index')
+def restaurant_index():
+    return render_template('restaurant/rindex.html')
+
+@app.route('/menu')
+def menu():
+    return render_template('restaurant/menu.html')
+@app.route('/orders')
+def restaurant_orders():
+    return render_template('restaurant/orders.html')
+@app.route('/pickup')
+def restaurant_pickup():
+    return render_template('restaurant/pickup.html')
+
     
 if __name__ == '__main__':
     app.run(debug=True)
