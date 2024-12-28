@@ -29,32 +29,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return wrapper
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    app.logger.debug('Register route called')
-    errors = []
-    if request.method == 'POST':
-        app.logger.debug('Register form submitted')
-        username = request.form['username']
-        password = request.form['password']
-        confirm_password = request.form['confirm_password']
-        role = request.form['role']
-        
-        if password != confirm_password:
-            errors.append('Confirm Password does not match Password')
-        if not errors:
-            try:
-                register_user(username, password, int(role))
-                flash('Registration successful!', 'success')
-                return redirect(url_for('login'))
-            except Exception as e:
-                app.logger.error(f"Error during registration: {e}")
-                errors.append('An error occurred during registration')
-        
-    return render_template('register.html', errors=errors)
-
-
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST']) #登入畫面
 def login():
     app.logger.debug('Login route called')
     errors = []
@@ -73,6 +48,31 @@ def login():
             flash('Invalid username or password', 'danger')
     return render_template('login.html', errors=errors)
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    app.logger.debug('Register route called')
+    errors = []
+    if request.method == 'POST':
+        app.logger.debug('Register form submitted')
+        username = request.form['username']
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+        role = request.form['role']
+        
+        if password != confirm_password:
+            errors.append('Confirm Password does not match Password')
+        if not errors:
+            try:
+                register_user(username, password, int(role)) # db裡，處理用戶註冊
+                flash('Registration successful!', 'success')
+                return redirect(url_for('login'))
+            except Exception as e:
+                app.logger.error(f"Error during registration: {e}")
+                errors.append('An error occurred during registration')
+        
+    return render_template('register.html', errors=errors)
+
+
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
@@ -81,19 +81,17 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/platform/dashboard')
-#@login_required
+@login_required
 def platform_dashboard():
     merchants_revenue = get_merchants_revenue()
     delivery_person_orders = get_delivery_person_orders()
     customers_due_amount = get_customers_due_amount()
 
-    #if session.get('role') == 4:
-    return render_template('platform.html', 
+    if session.get('role') == 4:
+        return render_template('platform.html', 
             merchants_revenue=merchants_revenue, 
             delivery_person_orders=delivery_person_orders, 
             customers_due_amount=customers_due_amount)
-    
-    
     
 if __name__ == '__main__':
     app.run(debug=True)

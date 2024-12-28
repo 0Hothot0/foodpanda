@@ -67,7 +67,7 @@ def register_user(username, password, role):
             )
     db.commit()
 
-def get_merchants_revenue():
+def get_merchants_revenue(): #列出各商家應收金額
     db, cursor = get_db()
     cursor.execute("""
         SELECT rd.restaurant_name, SUM(o.total_amount) AS total_revenue
@@ -78,7 +78,7 @@ def get_merchants_revenue():
     result = cursor.fetchall()
     return result
 
-def get_delivery_person_orders():
+def get_delivery_person_orders(): #列出各小哥接單數
     db, cursor = get_db()
     cursor.execute("""
         SELECT dpd.full_name, COUNT(o.order_id) AS total_orders
@@ -89,7 +89,7 @@ def get_delivery_person_orders():
     result = cursor.fetchall()
     return result
 
-def get_customers_due_amount():
+def get_customers_due_amount(): #列出各客戶應付金額
     db, cursor = get_db()
     cursor.execute("""
         SELECT cd.full_name, SUM(o.total_amount) AS due_amount
