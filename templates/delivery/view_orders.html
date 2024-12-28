@@ -26,7 +26,7 @@
             justify-content: space-between;
             margin-bottom: 10px;
         }
-        .button {
+        button {
             display: inline-block;
             padding: 10px 20px;
             margin: 5px 0;
@@ -35,7 +35,7 @@
             border: none;
             cursor: pointer;
         }
-        .button:hover {
+        button:hover {
             background-color: #0056b3;
         }
         .nav-button {
@@ -55,12 +55,24 @@
 </head>
 <body>
     <div class="container">
-        <h1>查看待送訂單</h1>
+        <h1>待接收訂單</h1>
         <div id="order-list">
             <!-- 範例訂單 -->
             <div class="order-item">
-                <span>訂單 #1: 炒飯 - $50</span>
-                <button class="button" onclick="acceptOrder(1)">接單</button>
+                {% if order %}
+        <ul>
+        {% for ord in order %}
+            <a href="{{ url_for('order_detail', order_id=ord['order_id']) }}">
+                訂單編號: {{ ord['order_id'] }} - 
+                客戶: {{ ord['customer_id'] }} - 
+                總額: {{ ord['total_amount'] }}
+                <!-- <button onclick="acceptOrder({{ ord['order_id'] }})">接單</button> -->
+            </a>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>目前沒有待送的訂單。</p>
+    {% endif %}
             </div>
         </div>
         <div>
@@ -70,10 +82,19 @@
 
     <script>
         function acceptOrder(orderId) {
+    fetch(`/accepted_order/${orderId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => {
+        if (response.ok) {
             alert(`訂單 #${orderId} 已接單`);
-            // 在這裡可以添加更多邏輯來處理接單
             window.location.href = "{{ url_for('accepted_order') }}";
+        } else {
+            alert(`接單失敗，請稍後再試`);
         }
+    });
+}
     </script>
 </body>
 </html>

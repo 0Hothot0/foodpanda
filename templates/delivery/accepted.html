@@ -57,12 +57,17 @@
     <div class="container">
         <h1>已接收訂單</h1>
         <div id="my-order-list">
-            <!-- 範例訂單 -->
-            <div class="order-item">
-                <span>訂單 #1: 炒飯 - $50</span>
-                <button class="pickup"  onclick="pickupOrder(1)">取貨</button>
-                <button  onclick="completeOrder(1)">送達簽收</button>
-            </div>
+            {% if order %}
+            {% for ord in order %}
+                <div class="order-item">
+                    <a href="{{ url_for('order_detail', order_id=ord['order_id']) }}">訂單 #{{ ord['order_id'] }}: {{ ord['item_name'] }} - ${{ ord['total_amount'] }}</a>
+                    <!-- <button class="pickup" onclick="pickupOrder({{ ord['order_id'] }})">取貨</button>
+                    <button onclick="completeOrder({{ ord['order_id'] }})">送達簽收</button> -->
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>目前沒有已接收的訂單。</p>
+            {% endif %}
         </div>
         <div>
             <a href="{{ url_for('delivery_index') }}" class="nav-button">返回主頁</a>
@@ -81,7 +86,7 @@
         function completeOrder(orderId) {
             alert(`訂單 #${orderId} 已送達簽收`);
             // 在這裡可以添加更多邏輯來處理送達簽收
-            window.location.href = "{{ url_for('completed_orders') }}";
+            window.location.href = "{{ url_for('completed_order') }}";
         }
     </script>
 </body>

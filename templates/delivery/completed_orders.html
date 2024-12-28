@@ -47,7 +47,16 @@
         <div id="completed-order-list">
             <!-- 範例訂單 -->
             <div class="order-item">
-                <span>訂單 #1: 炒飯 - $50</span>
+                {% if order %}
+            {% for ord in order %}
+                <div class="order-item">
+                    <a href="{{ url_for('order_detail', order_id=ord['order_id']) }}">訂單 #{{ ord['order_id'] }}: {{ ord['item_name'] }} - ${{ ord['total_amount'] }}</a>
+                    <p>客戶評價: ❤️❤️❤️❤️</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>目前沒有已接收的訂單。</p>
+            {% endif %}
             </div>
         </div>
         <div>

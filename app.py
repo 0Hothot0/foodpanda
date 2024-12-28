@@ -2,9 +2,9 @@ import logging
 from flask import Flask, render_template, redirect, url_for, request, session, flash, jsonify
 from functools import wraps
 import os
-from dbUtils import get_db, close_db, validate_login, get_user, register_user
+from dbUtils import get_db, close_db, validate_login, get_user, register_user,get_completed_order
 from dbUtils import get_merchants_revenue, get_delivery_person_orders, get_customers_due_amount
-from dbUtils import add_menu_item, get_menu_item
+from dbUtils import add_menu_item, get_menu_item, get_pending_order, get_order_detail, get_accepted_order
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -115,15 +115,25 @@ def delivery_index():
 
 @app.route('/view_orders')
 def view_order():
-    return render_template('delivery/view_orders.html')
+    pending_orders = get_pending_order()
+    return render_template('delivery/view_orders.html', order = pending_orders)
 
-@app.route('/accepted_orders')
+@app.route('/accepted_orders/')
 def accepted_order():
-    return render_template('delivery/accepted.html')
+    accepted_orders = get_accepted_order()
+    return render_template('delivery/accepted.html',order = accepted_orders)
 
 @app.route('/completed_orders')
-def completed_orders():
-    return render_template('delivery/completed_orders.html')
+def completed_order():
+    completed_orders = get_completed_order()
+    return render_template('delivery/completed_orders.html',order = completed_orders)
+
+@app.route('/order/<int:order_id>')
+def order_detail(order_id):
+    order_detail = get_order_detail(order_id)
+    print(order_detail)
+    return render_template('delivery/orderdetail.html', order=order_detail)
+
 
 #餐廳
 @app.route('/restaurant_index')

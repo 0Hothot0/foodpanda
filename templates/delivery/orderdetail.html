@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查看待送訂單</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        
+        button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px 0;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        div{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .buttonbox{
+            display: flex;
+            flex-direction:row;
+            gap: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>訂單詳情</h1>
+        <div class="detail-item">
+            <span>訂單編號：{{ order['order_id'] }}</span>
+        </div>
+        <div class="detail-item">
+            <span>客戶姓名：{{ order['customer_name'] }}</span>
+        </div>
+        <div class="detail-item">
+            <span>餐廳名稱：{{ order['restaurant_name'] }}</span>
+        </div>
+        <div class="detail-item">
+            <span>訂單狀態：
+            {% if order['order_status'] == 'pending' %}
+                待接受
+            {% elif order['order_status'] == 'confirmed' %}
+                已接受
+            {% elif order['order_status'] == 'delivering' %}
+                運送中
+            {% elif order['order_status'] == 'completed' %}
+                已完成
+            {% endif %}</span>
+        </div>
+        <div class="detail-item">
+            <span>下訂時間：{{ order['created_at'] }}</span>
+        </div>
+        <div class="detail-item">
+            <span>配送員：{{ order['delivery_person_name'] or '尚未指派' }}</span>
+        </div>
+        <div class="detail-item">
+            <span>總金額：${{ order['total_amount'] }}</span>
+        </div>
+        <br>
+        <div class="buttonbox">
+            {% if order['order_status'] == 'pending' %}
+                <button onclick="acceptOrder({{ order['order_id'] }})">接單</button>
+                <a href="{{ url_for('view_order') }}" class="button">返回訂單列表</a>
+            {% elif order['order_status'] == 'confirmed' %}
+                <button onclick="completeOrder({{ order['order_id'] }})">取貨</button>
+                <a href="{{ url_for('accepted_order') }}" class="button">返回已接收訂單</a>
+            {% elif order['order_status'] == 'delivering' %}
+                <button onclick="completeOrder({{ order['order_id'] }})">送達</button>
+                <a href="{{ url_for('accepted_order') }}" class="button">返回已接收訂單</a>
+            <!-- {% elif order['order_status'] == 'delivering' %}
+                <button onclick="completeOrder({{ order['order_id'] }})">送達</button>
+                <a href="{{ url_for('accepted_order') }}" class="button">返回已接收訂單</a> -->
+            {% endif %}
+        </div>
+        
+    </div>
+    <script>
+        function acceptOrder(orderId) {
+            alert(`訂單 #${orderId} 已接受`);
+            // 模擬發送接單請求到後端
+            // 此處可以用 AJAX 或者 Fetch API 發送請求更新訂單狀態
+        }
+
+        function completeOrder(orderId) {
+            alert(`訂單 #${orderId} 已取貨`);
+            // 模擬發送送達請求到後端
+            // 這邊要變成配送中
+        }
+    </script>
+</body>
+</html>

@@ -40,7 +40,6 @@ def validate_login(username, password):
         return user
     return None
 
-
 def get_role_table(role):
     role_tables = {
         1: 'restaurant_details',
@@ -130,3 +129,42 @@ def get_menu_item(restaurant_id):
     except Exception as e:
         current_app.logger.error(f"Error fetching menu items: {e}")
         return []
+
+#小哥
+def get_pending_order():
+        db, cursor = get_db()
+        cursor.execute("SELECT * FROM orders WHERE order_status = 'pending'")
+        pending_orders = cursor.fetchall()
+        return pending_orders
+def get_accepted_order():
+        db, cursor = get_db()
+        cursor.execute("SELECT * FROM orders WHERE order_status = 'confirmed'")
+        accepted_orders = cursor.fetchall()
+        return accepted_orders
+def get_completed_order():
+        db, cursor = get_db()
+        cursor.execute("SELECT * FROM orders WHERE order_status = 'completed'")
+        completed_orders = cursor.fetchall()
+        return completed_orders
+
+def get_order_detail(order_id):
+        db, cursor = get_db()
+        cursor.execute("""
+            SELECT 
+                o.order_id, 
+                c.full_name AS customer_name, 
+                r.restaurant_name, 
+                o.total_amount, 
+                o.order_status, 
+                o.created_at, 
+                d.full_name AS delivery_person_name
+            FROM orders o
+            LEFT JOIN customer_details c ON o.customer_id = c.customer_id
+            LEFT JOIN restaurant_details r ON o.restaurant_id = r.restaurant_id
+            LEFT JOIN delivery_person_details d ON o.delivery_person_id = d.delivery_id
+            WHERE o.order_id = %s
+        """, (order_id,))
+        
+        # 取得查詢結果
+        order = cursor.fetchone()
+        return order
