@@ -82,6 +82,11 @@
         <div class="detail-item">
             <span>總金額：${{ order['total_amount'] }}</span>
         </div>
+        <div class="star">
+            {% if order['order_status'] == 'completed' %}
+                <p>客戶給您的評價: ❤️❤️❤️❤️</p>
+            {% endif %}
+        </div>
         <br>
         <div class="buttonbox">
             {% if order['order_status'] == 'delivery_pending' %}
@@ -95,7 +100,7 @@
                 <a href="{{ url_for('accepted_order') }}" class="button">返回已接收訂單</a>
             {% elif order['order_status'] == 'completed' %}
                 <button onclick="star({{ order['order_id'] }})">評分客戶</button>
-                <a href="{{ url_for('completed_order') }}" class="button">返回已接收訂單</a>
+                <a href="{{ url_for('completed_order') }}" class="button">返回已完成訂單</a>
             {% endif %}
         </div>
         
@@ -122,10 +127,49 @@
             });
         }
 
+        function take(orderId) {
+            // 彈出提示，告知用戶取餐操作已執行
+            alert(`訂單 #${orderId} 已取餐`);
+
+            // 發送 POST 請求到後端，通知更新訂單狀態
+            fetch(`/take_order/${orderId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = "{{ url_for('accepted_order') }}";
+                } else {
+                    response.json().then(data => {
+                        alert(`更新訂單狀態失敗：${data.error || '請稍後再試'}`);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('取餐失敗，請稍後再試');
+            });
+        }
+
         function completeOrder(orderId) {
-            alert(`訂單 #${orderId} 已取貨`);
-            // 模擬發送送達請求到後端
-            // 這邊要變成配送中
+            fetch(`/complete_order/${orderId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert(`您已完成訂單 #${orderId}`);
+                    window.location.href = "{{ url_for('completed_order') }}";
+                } else {
+                    response.json().then(data => {
+                        alert(`完成訂單失敗：${data.error || '請稍後再試'}`);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('完成訂單失敗，請稍後再試');
+            });
         }
     </script>
 </body>

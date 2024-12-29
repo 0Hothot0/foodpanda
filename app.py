@@ -2,8 +2,8 @@ import logging
 from flask import Flask, render_template, redirect, url_for, request, session, flash, jsonify
 from functools import wraps
 import os
-from dbUtils import get_db, close_db, validate_login, get_user, register_user,get_completed_order
-from dbUtils import get_merchants_revenue, get_delivery_person_orders, get_customers_due_amount
+from dbUtils import get_db, close_db, validate_login, get_user, register_user,get_completed_order, complete_current
+from dbUtils import get_merchants_revenue, get_delivery_person_orders, get_customers_due_amount, take_order
 from dbUtils import add_menu_item, get_menu_item, get_pending_order, get_order_detail, get_accepted_order, accept_current
 from dbUtils import get_menu, get_all_restaurants,  create_order, add_order_detail, add_review, get_orders_by_customer, get_customer_id_by_user_id, get_reviews_by_restaurant, get_merchant_by_id
 
@@ -122,7 +122,7 @@ def view_order():
 @app.route('/accepted_orders/')
 def accepted_order():
     orders = get_accepted_order()
-    print(orders)
+    # print(orders)
     return render_template('delivery/accepted.html',order = orders)
 
 @app.route('/accepted_current/<int:order_id>', methods=['POST'])
@@ -133,16 +133,33 @@ def update_status_to_waitpickup(order_id):
         if not user_id:
             return jsonify({'error': '未登入用戶，無法更新訂單'}), 401
 
-        app.logger.debug(f"接收到 order_id: {order_id} session_id: {user_id}")
+        # app.logger.debug(f"接收到 order_id: {order_id} session_id: {user_id}")
 
         # 調用 accept_current 函數
         accept_current(order_id, user_id)
 
-        app.logger.debug("SQL 執行完畢")
+        # app.logger.debug("SQL 執行完畢")
         return jsonify({'message': f'Order #{order_id} accepted successfully!'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/take_order/<int:order_id>', methods=['POST'])
+def take(order_id):
+    try:
+        take_order(order_id)
+        return jsonify({'message': f'訂單 #{order_id} 狀態已更新為配送中'}), 200
+    except Exception as e:
+        print(f"取餐操作失敗: {e}")
+        return jsonify({'error': '取餐操作失敗，請稍後再試'}), 500
+
+@app.route('/complete_order/<int:order_id>', methods=['POST'])
+def complete_now(order_id):
+    try:
+        complete_current(order_id)
+        return jsonify({'message': f'訂單 #{order_id} 已成功完成'}), 200
+    except Exception as e:
+        print(f"完成訂單失敗: {e}")
+        return jsonify({'error': '完成訂單失敗，請稍後再試'}), 500
 
 @app.route('/completed_orders')
 def completed_order():

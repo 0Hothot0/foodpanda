@@ -139,7 +139,7 @@ def get_pending_order():
 
 def get_accepted_order():
         db, cursor = get_db()
-        cursor.execute("SELECT * FROM orders WHERE order_status = 'wait_pickup'")
+        cursor.execute("SELECT * FROM orders WHERE order_status = 'wait_pickup' or order_status = 'delivering'")
         accepted_orders = cursor.fetchall()
         return accepted_orders
 
@@ -177,17 +177,32 @@ def accept_current(order_id, user_id):
             (delivery_id, order_id)
         )
         db.commit()
-        print(f"更新成功\n訂單 #{order_id} 分配給配送員 #{delivery_id}")
+        # print(f"更新成功\n訂單 #{order_id} 分配給配送員 #{delivery_id}")
     except Exception as e:
-        print(f"更新訂單失敗: {e}")
+        # print(f"更新訂單失敗: {e}")
         db.rollback()
         raise e
+
+def take_order(order_id):
+        db, cursor = get_db()
+        cursor.execute(
+                "UPDATE orders SET order_status = 'delivering' WHERE order_id = %s",(order_id,))
+        db.commit()
 
 def get_completed_order():
         db, cursor = get_db()
         cursor.execute("SELECT * FROM orders WHERE order_status = 'completed'")
         completed_orders = cursor.fetchall()
         return completed_orders
+
+def complete_current(order_id):
+    db, cursor = get_db()
+    try:
+        cursor.execute("""UPDATE orders SET order_status = 'completed' WHERE order_id = %s""", (order_id,))
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise e
 
 def get_order_detail(order_id):
         db, cursor = get_db()
