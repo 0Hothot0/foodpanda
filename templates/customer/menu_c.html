@@ -59,9 +59,9 @@
         <div id="menu-list">
             {% for item in menu_items %}
             <div class="menu-item">
-                <span>{{ item.item_name }} - ${{ item.price }}</span>
-                <button class="button" onclick="orderItem('{{ item.item_name }}')">下單</button>
-            </div>
+                <span>{{ item.item_name|escape }} - ${{ "%.2f"|format(item.price) }}</span>
+                <button class="button" onclick="orderItem({{ item.menu_id }}, '{{ item.item_name|escape }}', {{ item.price|round(2) }})">下單</button>
+            </div>  
             {% endfor %}
         </div>
         <div>
@@ -71,9 +71,37 @@
     </div>
 
     <script>
-        function orderItem(itemName, itemPrice) {
-            alert(`已下單: ${itemName} `);
+        function orderItem(menuId, itemName, price) {
+            const quantity = prompt(`您要幾份 ${itemName}?`, 1);
+    
+            if (quantity && quantity > 0) {
+                fetch('/place_order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        menu_id: menuId,
+                        quantity: parseInt(quantity),
+                        price: price
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('下單成功!');
+                    } else {
+                        alert('下單失敗: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('下單失敗，請稍後再試');
+                });
+            }
         }
     </script>
+    
+    
 </body>
 </html>

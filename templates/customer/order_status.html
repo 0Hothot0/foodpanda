@@ -82,22 +82,26 @@
             <div class="order-item">
                 <div class="order-details">
                     <span>訂單 #{{ order.order_id }}: {{ order.item_name }} - ${{ order.item_total }} - 狀態: {{ order.order_status }}</span>
-                    <button class="button" >收貨</button>
+                    <button class="button">收貨</button>
                 </div>
                 <div class="rating">
-                    <label for="rating-{{ order.order_id }}">評分:</label>
-                    <input type="number" id="rating-{{ order.order_id }}" min="1" max="5">
-                    <label for="comment-{{ order.order_id }}">評論:</label>
-                    <textarea id="comment-{{ order.order_id }}"></textarea>
-                    <button class="button" >提交評分</button>
+                    <form action="/submit_review" method="POST">
+                        <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                        <input type="hidden" name="menu_id" value="{{ order.menu_id }}">
+                        <label for="rating-{{ order.order_id }}">評分:</label>
+                        <input type="number" name="rating" id="rating-{{ order.order_id }}" min="1" max="5" required>
+                        <label for="comment-{{ order.order_id }}">評論:</label>
+                        <textarea name="comments" id="comment-{{ order.order_id }}"></textarea>
+                        <button class="button" type="submit">提交評分</button>
+                    </form>
                 </div>
             </div>
             {% endfor %}
         </div>
         <div>
-            <a href="/menu_c" class="nav-button">返回菜單</a>
             <a href="/customer_index" class="nav-button">返回主畫面</a>
         </div>
-    </div>    
+    </div>
+    
 </body>
 </html>

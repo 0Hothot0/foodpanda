@@ -5,7 +5,7 @@ import os
 from dbUtils import get_db, close_db, validate_login, get_user, register_user,get_completed_order
 from dbUtils import get_merchants_revenue, get_delivery_person_orders, get_customers_due_amount
 from dbUtils import add_menu_item, get_menu_item, get_pending_order, get_order_detail, get_accepted_order
-from dbUtils import get_menu, get_all_restaurants, get_order_details
+from dbUtils import get_menu, get_all_restaurants, get_order_details, create_order, add_order_detail
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -180,24 +180,22 @@ def add_menu_item_route():
         return jsonify({'error': '菜品上架失敗'}), 500
 
 #客戶
+@login_required  
 @app.route('/customer_index')
 def customer_index():
     return render_template('customer/index.html')
 
 @app.route('/merchant.html', methods=['GET'])
-@login_required  # 確保只有已登入的客戶才能訪問
+
 def merchants():
     """
     顯示所有商家的列表頁面
     """
     try:
-        # 調用DB函數獲取所有商家
         merchants = get_all_restaurants()
-        # 渲染商家列表模板，將商家資料傳遞到前端
         return render_template('customer/merchant.html', merchants=merchants)
     except Exception as e:
         app.logger.error(f"Error rendering merchants page: {e}")
-        # 如果出現錯誤，回傳空的商家列表頁面
         return render_template('customer/merchant.html', merchants=[])
 
 
@@ -208,14 +206,46 @@ def menu_c(restaurant_id):
     顯示指定餐廳的菜單頁面
     """
     try:
-        # 調用資料庫函數，獲取指定餐廳的菜單資料
         menu_items = get_menu(restaurant_id)
-        # 渲染菜單模板，將菜單資料傳遞到前端
         return render_template('customer/menu_c.html', menu_items=menu_items, restaurant_id=restaurant_id)
     except Exception as e:
         app.logger.error(f"Error rendering menu for restaurant_id {restaurant_id}: {e}")
-        # 如果出現錯誤，返回空的菜單頁面
         return render_template('customer/menu_c.html', menu_items=[], restaurant_id=restaurant_id)
+
+@app.route('/place_order', methods=['POST'])
+@login_required
+def place_order():
+    """
+    接收前端傳來的下單請求並存入資料庫
+    """
+    try:
+        data = request.json
+        menu_id = data.get('menu_id')
+        quantity = data.get('quantity')
+        price = data.get('price')
+        
+        if not menu_id or not quantity or not price:
+            return jsonify({'success': False, 'error': '缺少必要的下單資料'})
+
+        # 從 session 獲取 customer_id
+        customer_id = session.get('user_id')
+
+        # 假設 restaurant_id 可通過 menu_id 查詢
+        menu_item = get_menu_item(menu_id)
+        restaurant_id = menu_item['restaurant_id']
+        total_amount = quantity * price
+
+        # 插入到 orders 表
+        order_id = create_order(customer_id, restaurant_id, total_amount)
+
+        # 插入到 order_details 表
+        add_order_detail(order_id, menu_id, quantity)
+
+        return jsonify({'success': True})
+    except Exception as e:
+        app.logger.error(f"Error placing order: {e}")
+        return jsonify({'success': False, 'error': '系統錯誤，請稍後再試'})
+
 
 @app.route('/order_status.html', methods=['GET'])
 @login_required
@@ -233,10 +263,41 @@ def order_status():
         orders = get_order_details(customer_id)
 
         # 傳遞訂單資料到前端模板
-        return render_template('order_status.html', orders=orders)
+        return render_template('customer/order_status.html', orders=orders)
     except Exception as e:
         app.logger.error(f"Error fetching order status: {e}")
-        return render_template('order_status.html', orders=[])
+        return render_template('customer/order_status.html', orders=[])
+
+
+@app.route('/submit_review', methods=['POST'])
+@login_required
+def submit_review():
+    """
+    處理客戶提交的評分和評論
+    """
+    try:
+        # 從前端表單接收數據
+        order_id = request.form.get('order_id')
+        menu_id = request.form.get('menu_id')
+        rating = request.form.get('rating')
+        comments = request.form.get('comments')
+
+        # 確保客戶 ID 來自 session
+        customer_id = session.get('user_id')
+        if not customer_id:
+            return jsonify({'error': 'Unauthorized access'}), 401
+
+        # 驗證輸入數據
+        if not (order_id and menu_id and rating):
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        # 將評分和評論存入數據庫
+        submit_review(order_id, customer_id, menu_id, int(rating), comments)
+
+        return jsonify({'success': 'Review submitted successfully'})
+    except Exception as e:
+        app.logger.error(f"Error submitting review: {e}")
+        return jsonify({'error': 'Failed to submit review'}), 500
 
     
 if __name__ == '__main__':

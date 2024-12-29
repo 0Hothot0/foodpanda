@@ -218,6 +218,27 @@ def get_order_details(order_id):
     """, (order_id,))
     return cursor.fetchall()
 
+def create_order(customer_id, restaurant_id, total_amount):
+    db, cursor = get_db()
+    cursor.execute("""
+        INSERT INTO orders (customer_id, restaurant_id, total_amount, order_status)
+        VALUES (%s, %s, %s, 'pending')
+    """, (customer_id, restaurant_id, total_amount))
+    db.commit()
+    return cursor.lastrowid  # 返回新插入的 order_id
+
+def add_order_detail(order_id, menu_id, quantity):
+    db, cursor = get_db()
+    cursor.execute("""
+        INSERT INTO order_details (order_id, menu_id, quantity)
+        VALUES (%s, %s, %s)
+    """, (order_id, menu_id, quantity))
+    db.commit()
+
+def get_menu_item(menu_id):
+    db, cursor = get_db()
+    cursor.execute("SELECT * FROM menu WHERE menu_id = %s", (menu_id,))
+    return cursor.fetchone()
 
 def get_order_status(order_id):
     db, cursor = get_db()
