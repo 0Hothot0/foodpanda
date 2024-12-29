@@ -63,9 +63,9 @@
         </div>
         <div class="detail-item">
             <span>訂單狀態：
-            {% if order['order_status'] == 'pending' %}
+            {% if order['order_status'] == 'delivery_pending' %}
                 待接受
-            {% elif order['order_status'] == 'confirmed' %}
+            {% elif order['order_status'] == 'wait_pickup' %}
                 已接受
             {% elif order['order_status'] == 'delivering' %}
                 運送中
@@ -84,27 +84,42 @@
         </div>
         <br>
         <div class="buttonbox">
-            {% if order['order_status'] == 'pending' %}
+            {% if order['order_status'] == 'delivery_pending' %}
                 <button onclick="acceptOrder({{ order['order_id'] }})">接單</button>
                 <a href="{{ url_for('view_order') }}" class="button">返回訂單列表</a>
-            {% elif order['order_status'] == 'confirmed' %}
-                <button onclick="completeOrder({{ order['order_id'] }})">取貨</button>
+            {% elif order['order_status'] == 'wait_pickup' %}
+                <button onclick="take({{ order['order_id'] }})">取貨</button>
                 <a href="{{ url_for('accepted_order') }}" class="button">返回已接收訂單</a>
             {% elif order['order_status'] == 'delivering' %}
                 <button onclick="completeOrder({{ order['order_id'] }})">送達</button>
                 <a href="{{ url_for('accepted_order') }}" class="button">返回已接收訂單</a>
-            <!-- {% elif order['order_status'] == 'delivering' %}
-                <button onclick="completeOrder({{ order['order_id'] }})">送達</button>
-                <a href="{{ url_for('accepted_order') }}" class="button">返回已接收訂單</a> -->
+            {% elif order['order_status'] == 'completed' %}
+                <button onclick="star({{ order['order_id'] }})">評分客戶</button>
+                <a href="{{ url_for('completed_order') }}" class="button">返回已接收訂單</a>
             {% endif %}
         </div>
         
     </div>
     <script>
         function acceptOrder(orderId) {
-            alert(`訂單 #${orderId} 已接受`);
-            // 模擬發送接單請求到後端
-            // 此處可以用 AJAX 或者 Fetch API 發送請求更新訂單狀態
+            fetch(`/accepted_current/${orderId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert(`訂單 #${orderId} 已接單`);
+                    window.location.href = "{{ url_for('accepted_order') }}";
+                } else {
+                    response.json().then(data => {
+                        alert(`接單失敗：${data.error || '請稍後再試'}`);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('接單失敗，請稍後再試');
+            });
         }
 
         function completeOrder(orderId) {

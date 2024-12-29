@@ -51,7 +51,7 @@
             {% for ord in order %}
                 <div class="order-item">
                     <a href="{{ url_for('order_detail', order_id=ord['order_id']) }}">訂單 #{{ ord['order_id'] }}: {{ ord['item_name'] }} - ${{ ord['total_amount'] }}</a>
-                    <p>客戶評價: ❤️❤️❤️❤️</p>
+                    <p>客戶給您的評價: ❤️❤️❤️❤️</p>
                 </div>
                 {% endfor %}
             {% else %}

@@ -5,7 +5,7 @@ import os
 from dbUtils import get_db, close_db, validate_login, get_user, register_user,get_completed_order
 from dbUtils import get_merchants_revenue, get_delivery_person_orders, get_customers_due_amount
 from dbUtils import add_menu_item, get_menu_item, get_pending_order, get_order_detail, get_accepted_order
-from dbUtils import get_menu, get_all_restaurants, get_order_details, create_order, add_order_detail
+from dbUtils import get_menu, get_all_restaurants, get_order_details, create_order, add_order_detail, accept_current
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -121,8 +121,28 @@ def view_order():
 
 @app.route('/accepted_orders/')
 def accepted_order():
-    accepted_orders = get_accepted_order()
-    return render_template('delivery/accepted.html',order = accepted_orders)
+    orders = get_accepted_order()
+    print(orders)
+    return render_template('delivery/accepted.html',order = orders)
+
+@app.route('/accepted_current/<int:order_id>', methods=['POST'])
+def update_status_to_waitpickup(order_id):
+    try:
+        # 從 session 獲取 user_id
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'error': '未登入用戶，無法更新訂單'}), 401
+
+        app.logger.debug(f"接收到 order_id: {order_id} session_id: {user_id}")
+
+        # 調用 accept_current 函數
+        accept_current(order_id, user_id)
+
+        app.logger.debug("SQL 執行完畢")
+        return jsonify({'message': f'Order #{order_id} accepted successfully!'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/completed_orders')
 def completed_order():

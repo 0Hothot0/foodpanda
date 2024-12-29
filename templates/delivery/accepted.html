@@ -21,11 +21,11 @@
         h1 {
             text-align: center;
         }
-        .order-item {
+        /* .order-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
-        }
+            margin-bottom: 10px; 
+        }*/
         button {
             display: inline-block;
             padding: 10px 20px;
@@ -51,6 +51,13 @@
         .nav-button:hover {
             background-color: #0056b3;
         }
+
+        #my-order-list{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
     </style>
 </head>
 <body>
@@ -58,15 +65,17 @@
         <h1>已接收訂單</h1>
         <div id="my-order-list">
             {% if order %}
-            {% for ord in order %}
-                <div class="order-item">
-                    <a href="{{ url_for('order_detail', order_id=ord['order_id']) }}">訂單 #{{ ord['order_id'] }}: {{ ord['item_name'] }} - ${{ ord['total_amount'] }}</a>
-                    <!-- <button class="pickup" onclick="pickupOrder({{ ord['order_id'] }})">取貨</button>
-                    <button onclick="completeOrder({{ ord['order_id'] }})">送達簽收</button> -->
-                </div>
+            <ul class="order-item">
+                {% for ord in order %}
+                    <li>
+                        <a href="{{ url_for('order_detail', order_id=ord['order_id']) }}" class="order-link">
+                            訂單 #{{ ord['order_id'] }} - 金額: ${{ ord['total_amount'] }}
+                        </a>
+                    </li>
                 {% endfor %}
+                </ul>
             {% else %}
-                <p>目前沒有已接收的訂單。</p>
+                <p class="no-orders">目前沒有已接收的訂單。</p>
             {% endif %}
         </div>
         <div>

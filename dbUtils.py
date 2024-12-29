@@ -133,14 +133,56 @@ def get_menu_item(restaurant_id):
 #小哥
 def get_pending_order():
         db, cursor = get_db()
-        cursor.execute("SELECT * FROM orders WHERE order_status = 'pending'")
+        cursor.execute("SELECT * FROM orders WHERE order_status = 'delivery_pending'")
         pending_orders = cursor.fetchall()
         return pending_orders
+
 def get_accepted_order():
         db, cursor = get_db()
-        cursor.execute("SELECT * FROM orders WHERE order_status = 'confirmed'")
+        cursor.execute("SELECT * FROM orders WHERE order_status = 'wait_pickup'")
         accepted_orders = cursor.fetchall()
         return accepted_orders
+
+def accept_current(order_id, user_id):
+    """
+    更新訂單狀態為 'wait_pickup' 並分配給對應的配送員
+    """
+    db, cursor = get_db()
+    try:
+        # 第一步：從 users 表中查找外送員名稱
+        cursor.execute("SELECT username FROM users WHERE user_id = %s", (user_id,))
+        user_result = cursor.fetchone()
+        if not user_result:
+            raise ValueError(f"用戶 ID {user_id} 不存在")
+
+        delivery_person_name = user_result['username']
+        print(f"從 users 表獲取的配送員名稱: {delivery_person_name}")
+
+        # 第二步：從 delivery_person_details 表中查找 delivery_id
+        cursor.execute(
+            "SELECT delivery_id FROM delivery_person_details WHERE full_name = %s",
+            (delivery_person_name,)
+        )
+        delivery_result = cursor.fetchone()
+        if not delivery_result:
+            raise ValueError(f"配送員名稱 {delivery_person_name} 未找到對應的 delivery_id")
+
+        delivery_id = delivery_result['delivery_id']
+        print(f"從 delivery_person_details 表獲取的 delivery_id: {delivery_id}")
+
+        # 第三步：更新訂單狀態和分配配送員
+        cursor.execute(
+            """UPDATE orders SET order_status = 'wait_pickup', delivery_person_id = %s
+               WHERE order_id = %s""",
+            (delivery_id, order_id)
+        )
+        db.commit()
+        print(f"更新成功\n訂單 #{order_id} 分配給配送員 #{delivery_id}")
+    except Exception as e:
+        print(f"更新訂單失敗: {e}")
+        db.rollback()
+        raise e
+
 def get_completed_order():
         db, cursor = get_db()
         cursor.execute("SELECT * FROM orders WHERE order_status = 'completed'")
