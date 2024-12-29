@@ -49,6 +49,7 @@
             <div class="merchant-item">
                 <span>商家 #{{ merchant.restaurant_id }}: {{ merchant.restaurant_name }}</span>
                 <a href="/menu/{{ merchant.restaurant_id }}" class="button">查看菜單</a>
+                <a href="/reviews/{{ merchant.restaurant_id }}" class="button">查看評論</a>
             </div>
             {% endfor %}
         </div>

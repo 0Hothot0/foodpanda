@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ merchant.restaurant_name }} - 評論</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        .review-item {
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+        .review-item:last-child {
+            border-bottom: none;
+        }
+        .review-rating {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ merchant.restaurant_name }} - 評論</h1>
+        <div id="review-list">
+            {% if reviews and reviews|length > 0 %}
+                {% for review in reviews %}
+                <div class="review-item">
+                    <p><span class="review-rating">評分: {{ review.rating }}</span></p>
+                    <p>評論: {{ review.comments }}</p>
+                    <p>顧客: {{ review.customer_name }} | 日期: {{ review.created_at }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>目前尚無評論。</p>
+            {% endif %}
+        </div>
+        <a href="/merchant.html" class="button">返回商家列表</a>
+    </div>
+</body>
+</html>

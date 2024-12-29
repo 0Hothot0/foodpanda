@@ -51,6 +51,12 @@
         .nav-button:hover {
             background-color: #0056b3;
         }
+        .order-status {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+        }
     </style>
 </head>
 <body>
@@ -64,6 +70,20 @@
             </div>  
             {% endfor %}
         </div>
+
+        <h2>訂單狀態</h2>
+        <div id="order-status-list">
+            {% if orders and orders|length > 0 %}
+                {% for order in orders %}
+                <div class="order-status">
+                    訂單編號: {{ order.order_id }} | 菜單項目: {{ order.item_name }} | 數量: {{ order.quantity }} | 總金額: ${{ order.item_total }} | 狀態: {{ order.order_status }}
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>目前無訂單。</p>
+            {% endif %}
+        </div>
+
         <div>
             <a href="/merchant.html" class="nav-button">返回商家列表</a>
             <a href="/customer_index" class="nav-button">返回主畫面</a>
@@ -73,8 +93,10 @@
     <script>
         function orderItem(menuId, itemName, price) {
             const quantity = prompt(`您要幾份 ${itemName}?`, 1);
-    
+
             if (quantity && quantity > 0) {
+                const totalAmount = price * parseInt(quantity); // 計算總金額
+                console.log("總金額:", totalAmount);
                 fetch('/place_order', {
                     method: 'POST',
                     headers: {
@@ -83,13 +105,14 @@
                     body: JSON.stringify({
                         menu_id: menuId,
                         quantity: parseInt(quantity),
-                        price: price
+                        price: totalAmount
                     })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         alert('下單成功!');
+                        location.reload(); // 重新加載頁面以更新訂單狀態
                     } else {
                         alert('下單失敗: ' + data.error);
                     }
@@ -101,7 +124,5 @@
             }
         }
     </script>
-    
-    
 </body>
 </html>

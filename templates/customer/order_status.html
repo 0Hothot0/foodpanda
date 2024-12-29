@@ -22,55 +22,55 @@
             text-align: center;
         }
         .order-item {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 20px;
-            padding: 10px;
             border: 1px solid #ddd;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
         }
         .order-details {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
+            align-items: center;
+            margin-bottom: 15px;
         }
         .button {
-            display: inline-block;
             padding: 10px 20px;
-            margin: 5px 0;
             background-color: #007BFF;
             color: white;
             border: none;
             cursor: pointer;
+            border-radius: 5px;
         }
         .button:hover {
             background-color: #0056b3;
         }
         .nav-button {
-            display: inline-block;
             padding: 10px 20px;
-            margin: 5px;
             background-color: #007BFF;
             color: white;
-            border: none;
-            cursor: pointer;
             text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+            border-radius: 5px;
         }
         .nav-button:hover {
             background-color: #0056b3;
         }
         .rating {
-            display: flex;
-            flex-direction: column;
-            margin-top: 10px;
+            margin-top: 15px;
         }
-        .rating input[type="number"] {
-            width: 50px;
-            margin-bottom: 5px;
+        .rating label {
+            font-weight: bold;
         }
+        .rating input[type="number"],
         .rating textarea {
             width: 100%;
-            height: 50px;
-            margin-bottom: 5px;
+            margin-top: 5px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -78,30 +78,61 @@
     <div class="container">
         <h1>查看訂單狀態</h1>
         <div id="order-status-list">
-            {% for order in orders %}
-            <div class="order-item">
-                <div class="order-details">
-                    <span>訂單 #{{ order.order_id }}: {{ order.item_name }} - ${{ order.item_total }} - 狀態: {{ order.order_status }}</span>
-                    <button class="button">收貨</button>
+            {% if orders and orders|length > 0 %}
+                {% for order in orders %}
+                <div class="order-item">
+                    <div class="order-details">
+                        <span>訂單 #{{ order.order_id }}: {{ order.item_name }} - ${{ order.item_total }} - 狀態: {{ order.order_status }}</span>
+                        {% if order.order_status != 'completed' %}
+                        <button class="button" onclick="confirmReceipt({{ order.order_id }})">收貨</button>
+                        {% endif %}
+                    </div>
+                    <div class="rating">
+                        <form action="/submit_review" method="POST">
+                            <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                            <input type="hidden" name="menu_id" value="{{ order.menu_id }}">
+                            <label for="rating-{{ order.order_id }}">評分:</label>
+                            <input type="number" name="rating" id="rating-{{ order.order_id }}" min="1" max="5" required>
+                            <label for="comment-{{ order.order_id }}">評論:</label>
+                            <textarea name="comments" id="comment-{{ order.order_id }}" placeholder="請輸入您的評論..."></textarea>
+                            <button class="button" type="submit">提交評分</button>
+                        </form>
+                    </div>
                 </div>
-                <div class="rating">
-                    <form action="/submit_review" method="POST">
-                        <input type="hidden" name="order_id" value="{{ order.order_id }}">
-                        <input type="hidden" name="menu_id" value="{{ order.menu_id }}">
-                        <label for="rating-{{ order.order_id }}">評分:</label>
-                        <input type="number" name="rating" id="rating-{{ order.order_id }}" min="1" max="5" required>
-                        <label for="comment-{{ order.order_id }}">評論:</label>
-                        <textarea name="comments" id="comment-{{ order.order_id }}"></textarea>
-                        <button class="button" type="submit">提交評分</button>
-                    </form>
-                </div>
-            </div>
-            {% endfor %}
+                {% endfor %}
+            {% else %}
+                <p>目前沒有訂單。</p>
+            {% endif %}
         </div>
         <div>
             <a href="/customer_index" class="nav-button">返回主畫面</a>
         </div>
     </div>
-    
+
+    <script>
+        function confirmReceipt(orderId) {
+            if (confirm(`確定已收到訂單 #${orderId} 嗎？`)) {
+                fetch(`/confirm_receipt/${orderId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('訂單已確認收貨！');
+                        location.reload();
+                    } else {
+                        alert('收貨失敗: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('系統錯誤，請稍後再試');
+                });
+            }
+        }
+    </script>
 </body>
 </html>

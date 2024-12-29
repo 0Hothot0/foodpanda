@@ -4,8 +4,8 @@ from functools import wraps
 import os
 from dbUtils import get_db, close_db, validate_login, get_user, register_user,get_completed_order
 from dbUtils import get_merchants_revenue, get_delivery_person_orders, get_customers_due_amount
-from dbUtils import add_menu_item, get_menu_item, get_pending_order, get_order_detail, get_accepted_order
-from dbUtils import get_menu, get_all_restaurants, get_order_details, create_order, add_order_detail, accept_current
+from dbUtils import add_menu_item, get_menu_item, get_pending_order, get_order_detail, get_accepted_order, accept_current
+from dbUtils import get_menu, get_all_restaurants,  create_order, add_order_detail, add_review, get_orders_by_customer, get_customer_id_by_user_id, get_reviews_by_restaurant, get_merchant_by_id
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -223,48 +223,92 @@ def merchants():
 @login_required
 def menu_c(restaurant_id):
     """
-    顯示指定餐廳的菜單頁面
+    顯示指定餐廳的菜單頁面，並顯示當前客戶的訂單狀態。
     """
     try:
+        # 獲取菜單
         menu_items = get_menu(restaurant_id)
-        return render_template('customer/menu_c.html', menu_items=menu_items, restaurant_id=restaurant_id)
+        
+        # 獲取當前客戶的訂單
+        user_id = session.get('user_id')
+        customer_id = get_customer_id_by_user_id(user_id)
+        if not customer_id:
+            app.logger.error("無法獲取客戶 ID")
+            return redirect(url_for('login'))
+        
+        orders = get_orders_by_customer(customer_id)
+        
+        return render_template('customer/menu_c.html', menu_items=menu_items, restaurant_id=restaurant_id, orders=orders)
     except Exception as e:
         app.logger.error(f"Error rendering menu for restaurant_id {restaurant_id}: {e}")
-        return render_template('customer/menu_c.html', menu_items=[], restaurant_id=restaurant_id)
+        return render_template('customer/menu_c.html', menu_items=[], restaurant_id=restaurant_id, orders=[])
 
 @app.route('/place_order', methods=['POST'])
 @login_required
 def place_order():
     """
-    接收前端傳來的下單請求並存入資料庫
+    接收前端傳來的下單請求並存入資料庫。
     """
     try:
         data = request.json
         menu_id = data.get('menu_id')
         quantity = data.get('quantity')
-        price = data.get('price')
-        
-        if not menu_id or not quantity or not price:
-            return jsonify({'success': False, 'error': '缺少必要的下單資料'})
+        total_amount = data.get('price')
 
-        # 從 session 獲取 customer_id
-        customer_id = session.get('user_id')
+        # 獲取客戶 ID
+        user_id = session.get('user_id')
+        customer_id = get_customer_id_by_user_id(user_id)
+        if not customer_id:
+            return jsonify({'success': False, 'error': '無法確認客戶 ID'}), 400
 
-        # 假設 restaurant_id 可通過 menu_id 查詢
+        # 確認菜單項目是否存在
         menu_item = get_menu_item(menu_id)
+        if not menu_item:
+            return jsonify({'success': False, 'error': '菜單項目不存在'}), 404
+
+        # 獲取 restaurant_id
         restaurant_id = menu_item['restaurant_id']
-        total_amount = quantity * price
 
         # 插入到 orders 表
         order_id = create_order(customer_id, restaurant_id, total_amount)
-
-        # 插入到 order_details 表
         add_order_detail(order_id, menu_id, quantity)
 
-        return jsonify({'success': True})
+        # 返回訂單相關資訊
+        return jsonify({
+            'success': True,
+            'order': {
+                'order_id': order_id,
+                'menu_item': menu_item['item_name'],
+                'quantity': quantity,
+                'total_price': total_amount
+            }
+        })
     except Exception as e:
-        app.logger.error(f"Error placing order: {e}")
-        return jsonify({'success': False, 'error': '系統錯誤，請稍後再試'})
+        app.logger.error(f"下單時發生錯誤: {e}")
+        return jsonify({'success': False, 'error': '系統錯誤，請稍後再試'}), 500
+
+    
+@app.route('/get_orders', methods=['GET'])
+@login_required
+def get_orders():
+    """
+    API 路由：返回客戶的訂單數據
+    """
+    try:
+        # 從 session 中獲取用戶 ID 並獲取客戶 ID
+        user_id = session.get('user_id')
+        customer_id = get_customer_id_by_user_id(user_id)
+        if not customer_id:
+            return jsonify({'success': False, 'error': '無法確認客戶身份'}), 401
+
+        # 獲取客戶的訂單
+        orders = get_orders_by_customer(customer_id)
+
+        # 返回訂單資料
+        return jsonify({'success': True, 'orders': orders})
+    except Exception as e:
+        app.logger.error(f"Error fetching orders: {e}")
+        return jsonify({'success': False, 'error': '系統錯誤，請稍後再試'}), 500
 
 
 @app.route('/order_status.html', methods=['GET'])
@@ -274,13 +318,14 @@ def order_status():
     顯示客戶的訂單狀態頁面
     """
     try:
-        # 從 session 中獲取客戶 ID
-        customer_id = session.get('user_id')
+        # 從 session 中獲取用戶 ID 並獲取客戶 ID
+        user_id = session.get('user_id')
+        customer_id = get_customer_id_by_user_id(user_id)
         if not customer_id:
             return redirect(url_for('login'))
 
-        # 獲取該客戶的所有訂單
-        orders = get_order_details(customer_id)
+        # 獲取客戶的訂單
+        orders = get_orders_by_customer(customer_id)
 
         # 傳遞訂單資料到前端模板
         return render_template('customer/order_status.html', orders=orders)
@@ -293,31 +338,49 @@ def order_status():
 @login_required
 def submit_review():
     """
-    處理客戶提交的評分和評論
+    接收前端傳來的訂單評分並存入資料庫
     """
     try:
-        # 從前端表單接收數據
         order_id = request.form.get('order_id')
         menu_id = request.form.get('menu_id')
         rating = request.form.get('rating')
         comments = request.form.get('comments')
 
-        # 確保客戶 ID 來自 session
-        customer_id = session.get('user_id')
-        if not customer_id:
-            return jsonify({'error': 'Unauthorized access'}), 401
+        # 從 session 中獲取用戶 ID 並獲取客戶 ID
+        user_id = session.get('user_id')
+        customer_id = get_customer_id_by_user_id(user_id)
 
-        # 驗證輸入數據
-        if not (order_id and menu_id and rating):
-            return jsonify({'error': 'Missing required fields'}), 400
+        if not all([order_id, menu_id, rating, customer_id]):
+            flash('缺少必要的資料', 'danger')
+            return redirect(url_for('order_status'))
 
-        # 將評分和評論存入數據庫
-        submit_review(order_id, customer_id, menu_id, int(rating), comments)
-
-        return jsonify({'success': 'Review submitted successfully'})
+        # 插入評分到 reviews 表
+        add_review(order_id, customer_id, menu_id, rating, comments)
+        flash('評分成功！', 'success')
     except Exception as e:
         app.logger.error(f"Error submitting review: {e}")
-        return jsonify({'error': 'Failed to submit review'}), 500
+        flash('提交評分失敗，請稍後再試', 'danger')
+
+    return redirect(url_for('order_status'))
+
+@app.route('/reviews/<int:restaurant_id>', methods=['GET'])
+@login_required
+def reviews(restaurant_id):
+    """
+    顯示指定商家的評論頁面
+    """
+    try:
+        # 獲取該商家相關的評論
+        reviews = get_reviews_by_restaurant(restaurant_id)
+
+        # 獲取該商家資訊
+        merchant = get_merchant_by_id(restaurant_id)
+
+        return render_template('customer/reviews.html', reviews=reviews, merchant=merchant)
+    except Exception as e:
+        app.logger.error(f"Error fetching reviews for restaurant_id {restaurant_id}: {e}")
+        return render_template('customer/reviews.html', reviews=[], merchant={})
+
 
     
 if __name__ == '__main__':
