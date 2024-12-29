@@ -121,14 +121,83 @@ def add_menu_item(restaurant_id, item_name, price):
         raise e
 
 def get_menu_item(restaurant_id):
+    """
+    獲取指定餐廳的菜單項目
+    """
     try:
         db, cursor = get_db()
-        cursor.execute("SELECT item_name, price FROM menu WHERE restaurant_id = %s",(restaurant_id,))
+        cursor.execute("""
+            SELECT item_name, price 
+            FROM menu 
+            WHERE restaurant_id = %s
+        """, (restaurant_id,))
         menu_items = cursor.fetchall()
+        current_app.logger.debug(f"Fetched menu items: {menu_items}")  # 新增調試日誌
         return menu_items
     except Exception as e:
         current_app.logger.error(f"Error fetching menu items: {e}")
         return []
+
+#def get_menu_item(restaurant_id):
+#    try:
+#        db, cursor = get_db()
+#        cursor.execute("SELECT item_name, price FROM menu WHERE restaurant_id = %s",(restaurant_id,))
+#        menu_items = cursor.fetchall()
+#        return menu_items
+#    except Exception as e:
+#        current_app.logger.error(f"Error fetching menu items: {e}")
+#        return []
+
+def get_restaurant_orders(restaurant_id):
+    """
+    獲取屬於特定餐廳且具有指定狀態的訂單
+    :param restaurant_id: 餐廳 ID
+    :param status: 訂單狀態（默認為 restaurant_pending）
+    :return: 訂單列表
+    """
+    try: 
+        db, cursor = get_db()
+        cursor.execute("""
+            SELECT * FROM orders WHERE order_status = "restaurant_pending" and restaurant_id = %s ;
+        """, (restaurant_id, ))
+        return cursor.fetchall()
+    except Exception as e:
+        current_app.logger.error(f"Error fetching restaurant orders: {e}")
+        return []
+def update_restaurant_order_status(order_id, restaurant_id, new_status='delivery_pending'):
+    """
+    更新特定餐廳的訂單狀態
+    :param order_id: 訂單 ID
+    :param restaurant_id: 餐廳 ID
+    :param new_status: 新的訂單狀態（默認為 delivery_pending）
+    :return: 成功返回 True，失敗返回 False
+    """
+    try:
+        db, cursor = get_db()
+        # 驗證該訂單是否屬於該餐廳，且狀態為 restaurant_pending
+        cursor.execute("""
+            SELECT * FROM orders 
+            WHERE order_id = %s AND restaurant_id = %s AND order_status = 'restaurant_pending';
+        """, (order_id, restaurant_id))
+        order = cursor.fetchone()
+
+        if not order:
+            current_app.logger.warning(f"訂單 {order_id} 不屬於餐廳 {restaurant_id} 或狀態不是 restaurant_pending")
+            return False
+
+        # 更新訂單狀態
+        cursor.execute("""
+            UPDATE orders 
+            SET order_status = %s 
+            WHERE order_id = %s AND restaurant_id = %s;
+        """, (new_status, order_id, restaurant_id))
+        db.commit()
+        current_app.logger.info(f"訂單 {order_id} 狀態已更新為 {new_status}")
+        return True
+
+    except Exception as e:
+        current_app.logger.error(f"Error updating order status for order_id {order_id}: {e}")
+        return False
 
 #小哥
 def get_pending_order():

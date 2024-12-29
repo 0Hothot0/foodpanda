@@ -85,9 +85,12 @@
         <div class="list">
             <h2>已上架商品</h2>
             <ul id="menu-list">
-                <!-- 使用後端傳遞的數據生成列表 -->
                 {% for item in menu_items %}
-                    <li>{{ item.item_name }} ${{ item.price }} <button class="manage">編輯</button><button class="delete">刪除</button></li>
+                    <li>
+                         #{{ item['item_name'] }} -2343242 ${{ item['price'] }} 
+                        <button class="manage" onclick="manage()">編輯</button>
+                        <button class="delete" onclick="del()">刪除</button>
+                    </li>
                 {% endfor %}
             </ul>
         </div>
@@ -101,6 +104,7 @@
         async function addMenuItem() {
             const name = document.getElementById('menu-item-name').value;
             const price = document.getElementById('menu-item-price').value;
+            
             if (!name || !price) {
                 alert('請輸入完整的菜品名稱和價格');
                 return;
@@ -143,6 +147,13 @@
                 console.error('Error:', error);
                 alert('菜品上架時發生錯誤');
             }
+        }
+        function manage(){
+            alert("test")
+        }
+
+        function del(){
+            alert("test")
         }
     </script>
     

@@ -2,11 +2,10 @@ import logging
 from flask import Flask, render_template, redirect, url_for, request, session, flash, jsonify
 from functools import wraps
 import os
-from dbUtils import get_db, close_db, validate_login, get_user, register_user,get_completed_order
+from dbUtils import get_db, close_db, validate_login, get_user, register_user,get_completed_order,get_restaurant_orders
 from dbUtils import get_merchants_revenue, get_delivery_person_orders, get_customers_due_amount
 from dbUtils import add_menu_item, get_menu_item, get_pending_order, get_order_detail, get_accepted_order
-from dbUtils import get_menu, get_all_restaurants, get_order_details, create_order, add_order_detail
-
+from dbUtils import get_menu, get_all_restaurants, get_order_details, create_order, add_order_detail, update_restaurant_order_status
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
@@ -15,7 +14,7 @@ app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = '' #原本為root 但我的DB沒有密碼
 app.config['MYSQL_DB'] = 'foodpangolin'
-app.config['MYSQL_PORT'] = 3306    #原本為8889 windows環境port為3306
+app.config['MYSQL_PORT'] = 3307    #原本為8889 windows環境port為3306
 
 # 設置日誌
 logging.basicConfig(level=logging.DEBUG)
@@ -140,21 +139,56 @@ def order_detail(order_id):
 @app.route('/restaurant_index')
 def restaurant_index():
     return render_template('restaurant/rindex.html')
-
 @app.route('/menu')
 def menu():
     try:
-        restaurant_id = session.get('user_id') 
-        print(f"從 session 中獲取的 restaurant_id: {restaurant_id}")
+        restaurant_id = session.get('user_id')
+        if not restaurant_id:
+            flash("無效的餐廳 ID，請重新登入", "danger")
+            return redirect(url_for('login'))
+        
         menu_items = get_menu_item(restaurant_id)
+        app.logger.debug(f"餐廳 {restaurant_id} 的菜單：{menu_items}")  # 確認獲取的菜單項目
         return render_template('restaurant/menu.html', menu_items=menu_items)
     except Exception as e:
         app.logger.error(f"Error rendering menu page: {e}")
-        return render_template('restaurant/menu.html', menu_items=[])
+        return render_template('restaurant/menu.html', menu_items=menu_items)
 
-@app.route('/orders')
-def restaurant_orders():
-    return render_template('restaurant/orders.html')
+#@app.route('/menu')
+#def menu():
+#    try:
+#        restaurant_id = session.get('user_id') 
+#        print(f"從 session 中獲取的 restaurant_id: {restaurant_id}")
+#        menu_items = get_menu_item(restaurant_id)
+#        return render_template('restaurant/menu.html', menu_items=menu_items)
+#    except Exception as e:
+#        app.logger.error(f"Error rendering menu page: {e}")
+#        return render_template('restaurant/menu.html', menu_items=[])
+
+@app.route('/orders', methods=['GET', 'POST'])
+@login_required
+def confirm_order():
+    restaurant_id = session.get('user_id')  # 假設 session 中 user_id 是餐廳 ID
+
+    if not restaurant_id:
+        flash("無效的餐廳 ID", "danger")
+        return redirect(url_for('restaurant_index'))
+
+    if request.method == 'POST':
+        order_id = request.form.get('order_id')  # 從表單獲取訂單 ID
+        if not order_id:
+            flash("無效的訂單 ID", "danger")
+            return redirect(url_for('confirm_order'))
+
+        # 調用 dbutils 中的函數更新訂單狀態
+        if update_restaurant_order_status(order_id, restaurant_id):
+            flash(f"訂單 {order_id} 狀態已更新為 delivery_pending", "success")
+        else:
+            flash(f"訂單 {order_id} 更新失敗，請檢查該訂單是否有效", "danger")
+
+    # 獲取餐廳狀態為 restaurant_pending 的訂單
+    orders = get_restaurant_orders(restaurant_id)
+    return render_template('restaurant/orders.html', orders=orders)
 
 @app.route('/pickup')
 def restaurant_pickup():
@@ -178,6 +212,8 @@ def add_menu_item_route():
         return jsonify({'success': True, 'message': '菜品已成功上架'})
     except Exception as e:
         return jsonify({'error': '菜品上架失敗'}), 500
+
+
 
 #客戶
 @login_required  

@@ -9,44 +9,55 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f4f4f4;
+            background-color: #f9f9f9;
         }
         .container {
             max-width: 800px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         h1 {
             text-align: center;
+            color: #333;
         }
         .order-item {
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            padding: 10px;
             margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fdfdfd;
+        }
+        .order-item span {
+            font-size: 16px;
+            color: #555;
         }
         .button {
-            display: inline-block;
-            padding: 10px 20px;
-            margin: 5px 0;
-            background-color: #007BFF;
-            color: white;
+            padding: 10px 15px;
+            background-color: #28a745;
+            color: #fff;
             border: none;
+            border-radius: 4px;
             cursor: pointer;
+            transition: background-color 0.3s;
         }
         .button:hover {
-            background-color: #0056b3;
+            background-color: #218838;
         }
         .nav-button {
             display: inline-block;
             padding: 10px 20px;
-            margin: 5px;
+            margin: 20px 0;
             background-color: #007BFF;
             color: white;
-            border: none;
-            cursor: pointer;
             text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
         }
         .nav-button:hover {
             background-color: #0056b3;
@@ -57,22 +68,19 @@
     <div class="container">
         <h1>確認收單</h1>
         <div id="order-list">
-            <!-- 範例訂單 -->
+            {% for order in orders %}
             <div class="order-item">
-                <span>訂單 #1: 炒飯 - $50</span>
-                <button class="button" onclick="confirmOrder(1)">確認收單</button>
+                <span>訂單 #{{ order.order_id }}: 客戶{{ order.customer_id }}: 訂單 #{{ order.order_status }}</span>
+                <form action="{{ url_for('confirm_order') }}" method="POST" style="margin: 0;">
+                    <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                    <button class="button" type="submit">確認收單</button>
+                </form>
             </div>
+            {% endfor %}
         </div>
         <div>
             <a href="{{ url_for('restaurant_index') }}" class="nav-button">返回主頁</a>
         </div>
     </div>
-
-    <script>
-        function confirmOrder(orderId) {
-            alert(`訂單 #${orderId} 已確認`);
-            // 在這裡可以添加更多邏輯來處理確認收單
-        }
-    </script>
 </body>
 </html>
