@@ -60,29 +60,29 @@
     </style>
 </head>
 <body>
-    <div class="container">
+<div class="container">
         <h1>菜單</h1>
-        <div id="menu-list">
-            {% for item in menu_items %}
-            <div class="menu-item">
-                <span>{{ item.item_name|escape }} - ${{ "%.2f"|format(item.price) }}</span>
-                <button class="button" onclick="orderItem({{ item.menu_id }}, '{{ item.item_name|escape }}', {{ item.price|round(2) }})">下單</button>
-            </div>  
-            {% endfor %}
-        </div>
+        <form id="order-form">
+            <!-- 隱藏字段存儲 restaurant_id -->
+            <input type="hidden" id="restaurant-id" value="{{ restaurant_id }}">
 
-        <h2>訂單狀態</h2>
-        <div id="order-status-list">
-            {% if orders and orders|length > 0 %}
-                {% for order in orders %}
-                <div class="order-status">
-                    訂單編號: {{ order.order_id }} | 菜單項目: {{ order.item_name }} | 數量: {{ order.quantity }} | 總金額: ${{ order.item_total }} | 狀態: {{ order.order_status }}
+            <div id="menu-list">
+                {% for item in menu_items %}
+                <div class="menu-item">
+                    <span>{{ item.item_name|escape }} - ${{ "%.2f"|format(item.price) }}</span>
+                    <input type="number" id="quantity-{{ item.menu_id }}" name="quantity-{{ item.menu_id }}" min="0" placeholder="數量">
+                </div>
+                {% else %}
+                <div class="menu-item">
+                    <span>目前沒有菜單項目</span>
                 </div>
                 {% endfor %}
-            {% else %}
-                <p>目前無訂單。</p>
-            {% endif %}
-        </div>
+            </div>
+            <button type="button" class="button" onclick="submitOrder()">送出</button>
+        </form>
+
+        <div>
+
 
         <div>
             <a href="/merchant.html" class="nav-button">返回商家列表</a>
@@ -91,37 +91,49 @@
     </div>
 
     <script>
-        function orderItem(menuId, itemName, price) {
-            const quantity = prompt(`您要幾份 ${itemName}?`, 1);
+        function submitOrder() {
+            const restaurantId = document.getElementById('restaurant-id').value; // 獲取餐廳 ID
+            const form = document.getElementById('order-form');
+            const formData = new FormData(form);
 
-            if (quantity && quantity > 0) {
-                const totalAmount = price * parseInt(quantity); // 計算總金額
-                console.log("總金額:", totalAmount);
-                fetch('/place_order', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        menu_id: menuId,
-                        quantity: parseInt(quantity),
-                        price: totalAmount
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('下單成功!');
-                        location.reload(); // 重新加載頁面以更新訂單狀態
-                    } else {
-                        alert('下單失敗: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('下單失敗，請稍後再試');
-                });
+            const orderItems = []; // 收集訂單項目
+            formData.forEach((value, key) => {
+                if (value > 0) {
+                    const menuId = key.split('-')[1]; // 提取 menu_id
+                    orderItems.push({
+                        menu_id: parseInt(menuId),
+                        quantity: parseInt(value),
+                        restaurant_id: parseInt(restaurantId) // 添加餐廳 ID
+                    });
+                }
+            });
+
+            if (orderItems.length === 0) {
+                alert('請至少選擇一項菜品');
+                return;
             }
+
+            // 發送訂單到後端
+            fetch('/place_order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ order_items: orderItems }), // 一次性提交所有訂單項
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('下單成功!');
+                    location.reload(); // 重新加載頁面
+                } else {
+                    alert('下單失敗: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('下單失敗，請稍後再試');
+            });
         }
     </script>
 </body>

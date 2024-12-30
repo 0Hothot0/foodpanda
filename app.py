@@ -268,41 +268,41 @@ def place_order():
     """
     try:
         data = request.json
-        menu_id = data.get('menu_id')
-        quantity = data.get('quantity')
-        total_amount = data.get('price')
+        app.logger.info(f"接收到的數據: {data}")
 
-        # 獲取客戶 ID
+        order_items = data.get('order_items')
+        if not order_items or not isinstance(order_items, list):
+            return jsonify({'success': False, 'error': 'Invalid order_items format'}), 400
+
+        # 获取用户信息
         user_id = session.get('user_id')
         customer_id = get_customer_id_by_user_id(user_id)
         if not customer_id:
             return jsonify({'success': False, 'error': '無法確認客戶 ID'}), 400
 
-        # 確認菜單項目是否存在
-        menu_item = get_menu_item(menu_id)
-        if not menu_item:
-            return jsonify({'success': False, 'error': '菜單項目不存在'}), 404
+        # 提取餐廳 ID
+        restaurant_id = order_items[0].get('restaurant_id')
 
-        # 獲取 restaurant_id
-        restaurant_id = menu_item['restaurant_id']
-
-        # 插入到 orders 表
+        # 创建订单主表
+        total_amount = sum(
+            get_menu_item(item['menu_id'])['price'] * item['quantity']
+            for item in order_items
+        )
         order_id = create_order(customer_id, restaurant_id, total_amount)
-        add_order_detail(order_id, menu_id, quantity)
 
-        # 返回訂單相關資訊
-        return jsonify({
-            'success': True,
-            'order': {
-                'order_id': order_id,
-                'menu_item': menu_item['item_name'],
-                'quantity': quantity,
-                'total_price': total_amount
-            }
-        })
+        # 插入订单详情
+        for item in order_items:
+            menu_id = item.get('menu_id')
+            quantity = item.get('quantity')
+            app.logger.debug(f"Inserting into order_details: menu_id={menu_id}, quantity={quantity}")
+            add_order_detail(order_id, menu_id, quantity)
+
+        return jsonify({'success': True, 'order_id': order_id})
     except Exception as e:
         app.logger.error(f"下單時發生錯誤: {e}")
         return jsonify({'success': False, 'error': '系統錯誤，請稍後再試'}), 500
+
+
 
     
 @app.route('/get_orders', methods=['GET'])
@@ -350,6 +350,37 @@ def order_status():
         app.logger.error(f"Error fetching order status: {e}")
         return render_template('customer/order_status.html', orders=[])
 
+@app.route('/confirm_receipt/<int:order_id>', methods=['POST'])
+@login_required
+def confirm_receipt(order_id):
+    """
+    确认订单收货
+    """
+    try:
+        # 获取当前用户 ID
+        user_id = session.get('user_id')
+        customer_id = get_customer_id_by_user_id(user_id)
+        
+        if not customer_id:
+            return jsonify({'success': False, 'error': '无效的用户身份'}), 403
+        
+        # 更新订单状态为已完成
+        db, cursor = get_db()
+        cursor.execute("""
+            UPDATE orders
+            SET order_status = 'completed'
+            WHERE order_id = %s AND customer_id = %s
+        """, (order_id, customer_id))
+        
+        if cursor.rowcount == 0:
+            return jsonify({'success': False, 'error': '订单不存在或无法更新'}), 404
+
+        db.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        
+        return jsonify({'success': False, 'error': '系统错误，无法确认收货'}), 500
+
 
 @app.route('/submit_review', methods=['POST'])
 @login_required
@@ -358,27 +389,30 @@ def submit_review():
     接收前端傳來的訂單評分並存入資料庫
     """
     try:
-        order_id = request.form.get('order_id')
-        menu_id = request.form.get('menu_id')
-        rating = request.form.get('rating')
-        comments = request.form.get('comments')
+        data = request.json  # 如果前端用的是 JSON 發送
+        app.logger.info(f"接收到的評分數據: {data}")
+
+        order_id = data.get('order_id')
+        menu_id = data.get('menu_id')
+        rating = data.get('rating')
+        comments = data.get('comments')
 
         # 從 session 中獲取用戶 ID 並獲取客戶 ID
         user_id = session.get('user_id')
         customer_id = get_customer_id_by_user_id(user_id)
 
-        if not all([order_id, menu_id, rating, customer_id]):
-            flash('缺少必要的資料', 'danger')
-            return redirect(url_for('order_status'))
+        if not all([order_id, rating, customer_id]):
+            app.logger.error('缺少必要的資料')
+            return jsonify({'success': False, 'error': '缺少必要的資料'}), 400
 
         # 插入評分到 reviews 表
         add_review(order_id, customer_id, menu_id, rating, comments)
-        flash('評分成功！', 'success')
+        app.logger.info('評分成功插入資料庫')
+        return jsonify({'success': True})
     except Exception as e:
-        app.logger.error(f"Error submitting review: {e}")
-        flash('提交評分失敗，請稍後再試', 'danger')
+        app.logger.error(f"提交評分時發生錯誤: {e}")
+        return jsonify({'success': False, 'error': '系統錯誤，請稍後再試'}), 500
 
-    return redirect(url_for('order_status'))
 
 @app.route('/reviews/<int:restaurant_id>', methods=['GET'])
 @login_required
