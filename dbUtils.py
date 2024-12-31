@@ -293,7 +293,7 @@ def create_order(customer_id, restaurant_id, total_amount):
     db, cursor = get_db()
     cursor.execute("""
         INSERT INTO orders (customer_id, restaurant_id, total_amount, order_status)
-        VALUES (%s, %s, %s, 'pending')
+        VALUES (%s, %s, %s, 'restaurant_pending')
     """, (customer_id, restaurant_id, total_amount))
     db.commit()
     return cursor.lastrowid  # 返回新插入的 order_id

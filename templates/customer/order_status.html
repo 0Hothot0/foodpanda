@@ -126,37 +126,47 @@
     </div>
     <script>
         function submitReview(event, orderId) {
-            event.preventDefault(); // 防止表單默認提交行為
-    
-            const form = document.getElementById(`review-form-${orderId}`);
-            const formData = new FormData(form);
-    
-            const data = {};
-            formData.forEach((value, key) => {
-                data[key] = value;
-            });
-    
-            fetch('/submit_review', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data.success) {
-                        alert('評分提交成功！');
-                        location.reload(); // 提交成功後刷新頁面
-                    } else {
-                        alert('提交評分失敗: ' + data.error);
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                    alert('系統錯誤，請稍後再試');
-                });
-        }
+    event.preventDefault(); // 防止表單默認提交行為
+
+    const form = document.getElementById(`review-form-${orderId}`);
+    const formData = new FormData(form);
+
+    const data = {};
+    formData.forEach((value, key) => {
+        data[key] = value;
+    });
+
+    fetch('/submit_review', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.success) {
+                alert('評分提交成功！');
+                // 提交成功後隱藏表單
+                form.style.display = 'none';
+
+                // 可選：顯示一條感謝消息
+                const statusBox = form.closest('.status-box');
+                const thankYouMessage = document.createElement('div');
+                thankYouMessage.textContent = '感謝您的評分！';
+                thankYouMessage.style.color = 'green';
+                thankYouMessage.style.marginTop = '10px';
+                statusBox.appendChild(thankYouMessage);
+            } else {
+                alert('提交評分失敗: ' + data.error);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            alert('系統錯誤，請稍後再試');
+        });
+}
+
     </script>
     
     <script>
