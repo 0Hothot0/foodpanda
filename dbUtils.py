@@ -376,34 +376,3 @@ def get_merchant_by_id(restaurant_id):
     except Exception as e:
         current_app.logger.error(f"Error fetching merchant details for restaurant_id {restaurant_id}: {e}")
         return {}
-
-# def get_order_status(order_id):
-#     db, cursor = get_db()
-#     cursor.execute("SELECT order_status FROM orders WHERE order_id = %s", (order_id,))
-#     return cursor.fetchone()
-
-	
-# def update_order_status(order_id, status):
-#     db, cursor = get_db()
-#     cursor.execute("UPDATE orders SET status = %s WHERE order_id = %s", (status, order_id))
-#     db.commit()
-
-
-# def submit_review(order_id, customer_id, menu_id, rating, comments):
-#     db, cursor = get_db()
-#     cursor.execute("""
-#         INSERT INTO reviews (order_id, customer_id, menu_id, rating, comments)
-#         VALUES (%s, %s, %s, %s, %s)
-#     """, (order_id, customer_id, menu_id, rating, comments))
-#     db.commit()
-
-	
-# def get_reviews(menu_id):
-#     db, cursor = get_db()
-#     cursor.execute("""
-#         SELECT r.review_id, r.rating, r.comments, r.created_at, m.item_name
-#         FROM reviews r
-#         JOIN menu m ON r.menu_id = m.menu_id
-#         WHERE r.menu_id = %s
-#     """, (menu_id,))
-#     return cursor.fetchall()
