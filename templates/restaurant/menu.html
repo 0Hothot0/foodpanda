@@ -87,12 +87,12 @@
             <ul id="menu-list">
                 {% for item in menu_items %}
                     <li>
-                         #{{ item['item_name'] }} -2343242 ${{ item['price'] }} 
-                        <button class="manage" onclick="manage()">編輯</button>
-                        <button class="delete" onclick="del()">刪除</button>
+                        {{ item['item_name'] }} ${{ item['price'] }}
+                        <button class="manage" onclick="edit('{{ item['item_name'] }}', {{ item['price'] }})">編輯</button>
+                        <button class="delete" onclick="del('{{ item['item_name'] }}')">刪除</button>
                     </li>
                 {% endfor %}
-            </ul>
+            </ul>            
         </div>
         <div id="menu-list"></div>
         <div>
@@ -101,61 +101,75 @@
     </div>
 
     <script>
-        async function addMenuItem() {
-            const name = document.getElementById('menu-item-name').value;
-            const price = document.getElementById('menu-item-price').value;
-            
-            if (!name || !price) {
-                alert('請輸入完整的菜品名稱和價格');
+        // 編輯菜品功能
+        async function edit(currentName, currentPrice) {
+            const newName = prompt(`請輸入新的名稱 (目前: ${currentName}):`, currentName);
+            const newPrice = prompt(`請輸入新的價格 (目前: ${currentPrice}):`, currentPrice);
+
+            if (!newName || !newPrice) {
+                alert('名稱或價格不能為空');
                 return;
             }
-    
+
             try {
-                // 發送 POST 請求到後端 API
-                const response = await fetch('/add_menu_item', {
+                const response = await fetch('/edit_menu_item', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        item_name: name,
-                        price: parseFloat(price),
+                        item_name: currentName,
+                        new_item_name: newName,
+                        new_price: parseFloat(newPrice),
                     }),
                 });
-    
+
                 const result = await response.json();
-    
+
                 if (response.ok && result.success) {
-                    // 如果請求成功，更新菜單列表
-                    const menuList = document.getElementById('menu-list');
-                    const newItem = document.createElement('div');
-                    newItem.className = 'menu-item';
-                    newItem.innerHTML = `<span>${name} - $${price}</span>`;
-                    menuList.appendChild(newItem);
-    
-                    // 清空輸入框
-                    document.getElementById('menu-item-name').value = '';
-                    document.getElementById('menu-item-price').value = '';
-    
-                    alert('菜品已成功上架');
+                    alert(result.message);
+                    location.reload(); // 更新成功後刷新頁面
                 } else {
-                    // 如果後端返回錯誤，顯示錯誤訊息
-                    alert(result.error || '菜品上架失敗');
+                    alert(result.message || '更新失敗');
                 }
             } catch (error) {
-                // 處理任何請求錯誤
-                console.error('Error:', error);
-                alert('菜品上架時發生錯誤');
+                console.error('更新時發生錯誤:', error);
+                alert('更新時發生錯誤');
             }
         }
-        function manage(){
-            alert("test")
-        }
 
-        function del(){
-            alert("test")
+
+    
+        // 刪除菜品功能
+async function del(itemName) {
+    if (!confirm(`確定要刪除商品 "${itemName}" 嗎？`)) return;
+
+    try {
+        const response = await fetch('/delete_menu_item', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ item_name: itemName }), // 傳遞 item_name
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            alert(result.message);
+            location.reload(); // 刪除成功後刷新頁面
+        } else {
+            alert(result.message || '刪除失敗');
         }
+    } catch (error) {
+        console.error('刪除時發生錯誤:', error);
+        alert('刪除時發生錯誤');
+    }
+}
+
+        
     </script>
+    
     
     
 </body>

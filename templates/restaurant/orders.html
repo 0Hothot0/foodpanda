@@ -24,18 +24,29 @@
             color: #333;
         }
         .order-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
             border: 1px solid #ddd;
+            padding: 10px;
             border-radius: 5px;
             background-color: #fdfdfd;
         }
-        .order-item span {
-            font-size: 16px;
-            color: #555;
+        .order-item h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        table th {
+            background-color: #f4f4f4;
         }
         .button {
             padding: 10px 15px;
@@ -70,7 +81,25 @@
         <div id="order-list">
             {% for order in orders %}
             <div class="order-item">
-                <span>訂單 #{{ order.order_id }}: 客戶{{ order.customer_id }}: 訂單 #{{ order.order_status }}</span>
+                <h2>訂單 #{{ order.order_id }} - 狀態: {{ order.order_status }}</h2>
+                <p>客戶 ID: {{ order.customer_id }}</p>
+                <p>總金額: {{ order.total_amount }}</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>商品名稱</th>
+                            <th>數量</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for detail in order.details %}
+                        <tr>
+                            <td>{{ detail.item_name }}</td>
+                            <td>{{ detail.quantity }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
                 <form action="{{ url_for('confirm_order') }}" method="POST" style="margin: 0;">
                     <input type="hidden" name="order_id" value="{{ order.order_id }}">
                     <button class="button" type="submit">確認收單</button>
