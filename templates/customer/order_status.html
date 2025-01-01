@@ -24,9 +24,10 @@
         .order-item {
             border: 1px solid #ddd;
             margin-bottom: 20px;
-            padding: 15px;
+            /* padding: 15px; */
             border-radius: 5px;
             background-color: #f9f9f9;
+            /* display: none; */
         }
         .order-details {
             display: flex;
@@ -58,6 +59,7 @@
             background-color: #0056b3;
         }
         .rating {
+            /* display: none; */
             margin-top: 15px;
         }
         .rating label {
@@ -80,7 +82,7 @@
         <div id="order-status-list">
             {% if orders and orders|length > 0 %}
                 {% for order_id, order_items in orders|groupby('order_id') %}
-                <div class="order-item">
+                <div class="order-item"></div>
                     <div>
                         <strong>訂單 #{{ order_id }}</strong>
                     </div>
@@ -98,7 +100,7 @@
                         {% elif status == 'wait_pickup' %}
                             <div class="status-text pickup">外送員取貨中</div>
                         {% elif status == 'delivering' %}
-                            <div class="status-text delivering">已送達</div>
+                            <div class="status-text delivering">您的餐點在路上</div>
                             <button class="button" onclick="completeOrder({{ order_id }})">收貨</button>
                         {% elif status == 'completed' %}
                             <div class="status-text completed">訂單已完成</div>
@@ -109,12 +111,12 @@
                                     <input type="number" name="rating" id="rating-{{ order_id }}" min="1" max="5" required>
                                     <label for="comment-{{ order_id }}">評論:</label>
                                     <textarea name="comments" id="comment-{{ order_id }}" placeholder="請輸入您的評論..."></textarea>
-                                    <button class="button" type="submit">提交評分</button>
+                                    <button class="sub" type="submit">提交評分</button>
                                 </form>
                             </div>
                             
                         {% endif %}
-                    </div>
+                </div>
                 {% endfor %}
             {% else %}
                 <p>目前沒有訂單。</p>
@@ -127,6 +129,7 @@
     <script>
         function submitReview(event, orderId) {
     event.preventDefault(); // 防止表單默認提交行為
+    
 
     const form = document.getElementById(`review-form-${orderId}`);
     const formData = new FormData(form);

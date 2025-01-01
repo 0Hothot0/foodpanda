@@ -198,7 +198,7 @@ def get_completed_order():
 def complete_current(order_id):
     db, cursor = get_db()
     try:
-        cursor.execute("""UPDATE orders SET order_status = 'completed' WHERE order_id = %s""", (order_id,))
+        cursor.execute("""UPDATE orders SET order_status = 'delivering' WHERE order_id = %s""", (order_id,))
         db.commit()
     except Exception as e:
         db.rollback()
