@@ -21,7 +21,9 @@ git clone https://github.com/你的用戶名/外送平台.git
 cd 外送平台
 ```
 ### 運行應用
+```
 flask run
+```
 
 ## 技術棧
 - 前端: HTML, CSS, JavaScript
