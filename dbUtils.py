@@ -99,6 +99,7 @@ def get_customers_due_amount():
     result = cursor.fetchall()
     return result
 #餐廳
+
 def add_menu_item(restaurant_id, item_name, price):
     """
     新增菜品到資料庫
@@ -120,15 +121,224 @@ def add_menu_item(restaurant_id, item_name, price):
         db.rollback()
         raise e
 
-def get_menu_item(restaurant_id):
+def edit_menu_item(item_name, new_item_name, new_price, restaurant_id):
+    """
+    根據 item_name 編輯菜單項目
+    :param item_name: 原始菜品名稱
+    :param new_item_name: 新的菜品名稱
+    :param new_price: 新的價格
+    :param restaurant_id: 餐廳 ID（確保正確性）
+    :return: 更新成功返回 True，失敗返回 False
+    """
     try:
         db, cursor = get_db()
-        cursor.execute("SELECT item_name, price FROM menu WHERE restaurant_id = %s",(restaurant_id,))
+        cursor.execute("""
+            UPDATE menu
+            SET item_name = %s, price = %s
+            WHERE item_name = %s AND restaurant_id = %s
+        """, (new_item_name, new_price, item_name, restaurant_id))
+        db.commit()
+        return cursor.rowcount > 0  # 如果有行數被更新，則成功
+    except Exception as e:
+        current_app.logger.error(f"更新菜單項目時發生錯誤: {e}")
+        db.rollback()
+        return False
+
+
+def delete_item_by_name(item_name):
+    """
+    使用 item_name 刪除商品
+    :param item_name: 商品名稱
+    :return: 刪除成功返回 True，失敗返回 False
+    """
+    try:
+        db, cursor = get_db()
+        cursor.execute("DELETE FROM menu WHERE item_name = %s", (item_name,))
+        db.commit()
+        return cursor.rowcount > 0  # 如果刪除成功，受影響行數會大於 0
+    except Exception as e:
+        current_app.logger.error(f"刪除商品 {item_name} 時發生錯誤: {e}")
+        return False
+
+def get_order_items(order_id):
+    """
+    根據訂單 ID 獲取訂單的詳細內容（商品名稱和數量）
+    :param order_id: 訂單 ID
+    :return: 包含商品名稱和數量的列表
+    """
+    try:
+        db, cursor = get_db()
+        cursor.execute("""
+            SELECT 
+                od.order_id,
+                m.item_name,
+                od.quantity
+            FROM 
+                order_details od
+            JOIN 
+                menu m ON od.menu_id = m.menu_id
+            WHERE 
+                od.order_id = %s;
+        """, (order_id,))
+        return cursor.fetchall()
+    except Exception as e:
+        current_app.logger.error(f"Error fetching items for order_id {order_id}: {e}")
+        return []
+
+def get_menu_item(username):
+    """
+    根據用戶名獲取菜單列表
+    :param username: 用戶名
+    :return: 菜單列表
+    """
+    try:
+        db, cursor = get_db()
+        query = """
+            SELECT 
+                m.item_name,
+                m.price
+            FROM 
+                users u
+            JOIN 
+                restaurant_details rd 
+                ON u.username = rd.restaurant_name
+            JOIN 
+                menu m 
+                ON rd.restaurant_id = m.restaurant_id
+            WHERE 
+                u.username = %s;
+        """
+        cursor.execute(query, (username,))
         menu_items = cursor.fetchall()
         return menu_items
     except Exception as e:
-        current_app.logger.error(f"Error fetching menu items: {e}")
+        current_app.logger.error(f"Error fetching menu items for user {username}: {e}")
         return []
+
+
+
+def get_restaurant_orders(restaurant_id):
+    """
+    獲取屬於特定餐廳且具有指定狀態的訂單
+    :param restaurant_id: 餐廳 ID
+    :param status: 訂單狀態（默認為 restaurant_pending）
+    :return: 訂單列表
+    """
+    try: 
+        db, cursor = get_db()
+        cursor.execute("""
+            SELECT * FROM orders WHERE order_status = "restaurant_pending" and restaurant_id = %s ;
+        """, (restaurant_id, ))
+        return cursor.fetchall()
+    except Exception as e:
+        current_app.logger.error(f"Error fetching restaurant orders: {e}")
+        return []
+def get_meal_completed_orders(restaurant_id):
+    """
+    獲取狀態為 meal_completed 的訂單
+    """
+    try:
+        db, cursor = get_db()
+        cursor.execute("""
+            SELECT * FROM orders 
+            WHERE order_status = 'meal_completed' 
+            AND restaurant_id = %s;
+        """, (restaurant_id,))
+        return cursor.fetchall()
+    except Exception as e:
+        current_app.logger.error(f"Error fetching meal_completed orders: {e}")
+        return []
+def update_order_status_meal_completed(order_id, restaurant_id):
+    """
+    將特定訂單狀態從 meal_completed 更新為 wait_pickup
+    """
+    try:
+        db, cursor = get_db()
+        cursor.execute("""
+            SELECT * FROM orders 
+            WHERE order_id = %s 
+            AND restaurant_id = %s 
+            AND order_status = 'meal_completed';
+        """, (order_id, restaurant_id))
+        order = cursor.fetchone()
+
+        if not order:
+            current_app.logger.warning(f"訂單 {order_id} 不屬於餐廳 {restaurant_id} 或狀態不是 meal_completed")
+            return False
+
+        cursor.execute("""
+            UPDATE orders 
+            SET order_status = 'wait_pickup' 
+            WHERE order_id = %s AND restaurant_id = %s;
+        """, (order_id, restaurant_id))
+        db.commit()
+        current_app.logger.info(f"訂單 {order_id} 狀態已更新為 wait_pickup")
+        return True
+
+    except Exception as e:
+        current_app.logger.error(f"Error updating order status for order_id {order_id}: {e}")
+        return False
+
+def update_restaurant_order_status(order_id, restaurant_id, new_status='delivery_pending'):
+    """
+    更新特定餐廳的訂單狀態
+    :param order_id: 訂單 ID
+    :param restaurant_id: 餐廳 ID
+    :param new_status: 新的訂單狀態（默認為 delivery_pending）
+    :return: 成功返回 True，失敗返回 False
+    """
+    try:
+        db, cursor = get_db()
+        # 驗證該訂單是否屬於該餐廳，且狀態為 restaurant_pending
+        cursor.execute("""
+            SELECT * FROM orders 
+            WHERE order_id = %s AND restaurant_id = %s AND order_status = 'restaurant_pending';
+        """, (order_id, restaurant_id))
+        order = cursor.fetchone()
+
+        if not order:
+            current_app.logger.warning(f"訂單 {order_id} 不屬於餐廳 {restaurant_id} 或狀態不是 restaurant_pending")
+            return False
+
+        # 更新訂單狀態
+        cursor.execute("""
+            UPDATE orders 
+            SET order_status = %s 
+            WHERE order_id = %s AND restaurant_id = %s;
+        """, (new_status, order_id, restaurant_id))
+        db.commit()
+        current_app.logger.info(f"訂單 {order_id} 狀態已更新為 {new_status}")
+        return True
+
+    except Exception as e:
+        current_app.logger.error(f"Error updating order status for order_id {order_id}: {e}")
+        return False
+    
+def get_restaurant_id_by_user_id(user_id):
+    db, cursor = get_db()
+    cursor.execute("""
+        SELECT 
+            item_name, 
+            price
+        FROM 
+            menu
+        WHERE 
+            restaurant_id = (
+                SELECT 
+                    restaurant_id 
+                FROM 
+                    restaurant_details 
+                JOIN 
+                    users 
+                ON 
+                    restaurant_details.restaurant_name = users.username 
+                WHERE 
+                    users.user_id = %s
+            )
+    """, (user_id,))
+    result = cursor.fetchone()
+    return result
+
 
 #小哥
 def get_pending_order():
@@ -198,7 +408,7 @@ def get_completed_order():
 def complete_current(order_id):
     db, cursor = get_db()
     try:
-        cursor.execute("""UPDATE orders SET order_status = 'completed' WHERE order_id = %s""", (order_id,))
+        cursor.execute("""UPDATE orders SET order_status = 'delivering' WHERE order_id = %s""", (order_id,))
         db.commit()
     except Exception as e:
         db.rollback()

@@ -4,8 +4,9 @@ from functools import wraps
 import os
 from dbUtils import get_db, close_db, validate_login, get_user, register_user,get_completed_order, complete_current
 from dbUtils import get_merchants_revenue, get_delivery_person_orders, get_customers_due_amount, take_order
-from dbUtils import add_menu_item, get_menu_item, get_pending_order, get_order_detail, get_accepted_order, accept_current
+from dbUtils import add_menu_item, get_menu_item, get_pending_order, get_order_detail, get_accepted_order, accept_current, get_restaurant_id_by_user_id
 from dbUtils import get_menu, get_all_restaurants,  create_order, add_order_detail, add_review, get_orders_by_customer, get_customer_id_by_user_id, get_reviews_by_restaurant, get_merchant_by_id
+from dbUtils import edit_menu_item, delete_item_by_name, update_restaurant_order_status, get_restaurant_orders, get_order_items, update_order_status_meal_completed, get_meal_completed_orders
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -181,21 +182,121 @@ def restaurant_index():
 @app.route('/menu')
 def menu():
     try:
-        restaurant_id = session.get('user_id') 
-        print(f"從 session 中獲取的 restaurant_id: {restaurant_id}")
-        menu_items = get_menu_item(restaurant_id)
+        restaurant_id = session.get('user_id')
+        print("rID",restaurant_id)
+        if not restaurant_id:
+            flash("無效的餐廳 ID，請重新登入", "danger")
+            return redirect(url_for('login'))
+
+        menu_items = get_restaurant_id_by_user_id(restaurant_id)
+        print(f"餐廳 {restaurant_id} 的菜單：{menu_items}")
         return render_template('restaurant/menu.html', menu_items=menu_items)
     except Exception as e:
         app.logger.error(f"Error rendering menu page: {e}")
         return render_template('restaurant/menu.html', menu_items=[])
+    
+@app.route('/edit_menu_item', methods=['POST'])
+def edit_menu_item_route():
+    try:
+        data = request.get_json()  # 獲取前端發送的 JSON 數據
+        item_name = data.get('item_name')
+        new_item_name = data.get('new_item_name')
+        new_price = data.get('new_price')
+        restaurant_id = session.get('user_id')  # 確保只影響該餐廳
 
-@app.route('/orders')
-def restaurant_orders():
-    return render_template('restaurant/orders.html')
+        if not item_name or not new_item_name or new_price is None:
+            return jsonify({'success': False, 'message': '請提供完整的更新資訊'}), 400
 
-@app.route('/pickup')
-def restaurant_pickup():
-    return render_template('restaurant/pickup.html')
+        # 調用工具函式進行更新
+        if edit_menu_item(item_name, new_item_name, new_price, restaurant_id):
+            return jsonify({'success': True, 'message': '菜單項目更新成功'})
+        else:
+            return jsonify({'success': False, 'message': '菜單項目更新失敗，請確認菜品是否存在'}), 400
+    except Exception as e:
+        print.logger.error(f"編輯菜單項目時發生錯誤: {e}")
+        return jsonify({'success': False, 'message': '伺服器錯誤'}), 500
+
+
+
+@app.route('/delete_menu_item', methods=['POST'])
+def delete_menu_item():
+    try:
+        data = request.get_json()  # 獲取前端發送的 JSON 數據
+        item_name = data.get('item_name')  # 從請求中獲取 item_name
+        print(item_name)
+
+        if not item_name:
+            return jsonify({'success': False, 'message': '無效的商品名稱'}), 400
+
+        # 執行刪除操作
+        result = delete_item_by_name(item_name)
+
+        if result:
+            return jsonify({'success': True, 'message': f'商品 "{item_name}" 已成功刪除'})
+        else:
+            return jsonify({'success': False, 'message': f'商品 "{item_name}" 刪除失敗，可能不存在'}), 400
+    except Exception as e:
+        print.logger.error(f"刪除商品時發生錯誤: {e}")
+        return jsonify({'success': False, 'message': '伺服器錯誤'}), 500
+
+@app.route('/orders', methods=['GET', 'POST'])
+@login_required
+def confirm_order():
+    restaurant_id = session.get('user_id')  # 假設 session 中 user_id 是餐廳 ID
+
+    if not restaurant_id:
+        flash("無效的餐廳 ID", "danger")
+        return redirect(url_for('restaurant_index'))
+
+    if request.method == 'POST':
+        order_id = request.form.get('order_id')  # 從表單獲取訂單 ID
+        if not order_id:
+            flash("無效的訂單 ID", "danger")
+            return redirect(url_for('confirm_order'))
+
+        # 調用 dbutils 中的函數更新訂單狀態
+        if update_restaurant_order_status(order_id, restaurant_id):
+            flash(f"訂單 {order_id} 狀態已更新為 delivery_pending", "success")
+        else:
+            flash(f"訂單 {order_id} 更新失敗，請檢查該訂單是否有效", "danger")
+
+    # 獲取餐廳狀態為 restaurant_pending 的訂單
+    orders = get_restaurant_orders(restaurant_id)
+
+    # 查詢每筆訂單的詳細內容
+    for order in orders:
+        order['details'] = get_order_items(order['order_id'])  # 使用 `get_order_items` 獲取詳細內容
+
+    return render_template('restaurant/orders.html', orders=orders)
+
+#@app.route('/pickup')
+#def restaurant_pickup():
+#    return render_template('restaurant/pickup.html')
+@app.route('/pickup', methods=['GET', 'POST'])
+@login_required
+def pickup():
+    restaurant_id = session.get('user_id')  # 獲取餐廳 ID
+
+    if not restaurant_id:
+        flash("無效的餐廳 ID，請重新登入", "danger")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        order_id = request.form.get('order_id')  # 從表單獲取訂單 ID
+        if not order_id:
+            flash("無效的訂單 ID", "danger")
+            return redirect(url_for('pickup'))
+
+        # 更新訂單狀態為 wait_pickup
+        if update_order_status_meal_completed(order_id, restaurant_id):
+            flash(f"訂單 {order_id} 狀態已更新為 wait_pickup，通知小哥取餐成功", "success")
+        else:
+            flash(f"訂單 {order_id} 更新失敗，請檢查該訂單是否有效", "danger")
+
+    # 獲取狀態為 meal_completed 的訂單
+    orders = get_meal_completed_orders(restaurant_id)
+
+    return render_template('restaurant/pickup.html', orders=orders)
 
 @app.route('/add_menu_item', methods=['POST'])
 def add_menu_item_route():
@@ -204,7 +305,7 @@ def add_menu_item_route():
         data = request.get_json()
         item_name = data.get('item_name')
         price = data.get('price')
-        restaurant_id = 1  # 假設 restaurant_id 為 1，可以根據登入用戶設定動態值
+        restaurant_id = session['user_id']
 
         if not item_name or not price:
             return jsonify({'error': '缺少菜品名稱或價格'}), 400
@@ -215,6 +316,7 @@ def add_menu_item_route():
         return jsonify({'success': True, 'message': '菜品已成功上架'})
     except Exception as e:
         return jsonify({'error': '菜品上架失敗'}), 500
+
 
 #客戶
 @login_required  

@@ -57,16 +57,21 @@
     <div class="container">
         <h1>通知取餐</h1>
         <div id="pickup-list">
-            <!-- 範例取餐通知 -->
+            {% for order in orders %}
             <div class="order-item">
-                <span>訂單 #1: 已準備好</span>
-                <button class="button" onclick="notifyPickup(1)">通知取餐</button>
+                <span>訂單 #{{ order.order_id }}: 已準備好</span>
+                <form action="{{ url_for('pickup') }}" method="POST" style="display: inline;">
+                    <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                    <button class="button" type="submit">通知取餐</button>
+                </form>
             </div>
+            {% endfor %}
         </div>
         <div>
             <a href="{{ url_for('restaurant_index') }}" class="nav-button">返回主頁</a>
         </div>
     </div>
+    
 
     <script>
         function notifyPickup(orderId) {
