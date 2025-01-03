@@ -42,7 +42,7 @@ def login():
             session['user_id'] = user['user_id']
             session['role'] = user['role']
             flash('Login successful!', 'success')
-            return render_template('platform.html')
+            return redirect('/platform/dashboard')
         else:
             errors.append('Invalid username or password')
             flash('Invalid username or password', 'danger')
